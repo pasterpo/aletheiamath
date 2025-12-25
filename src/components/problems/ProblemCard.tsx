@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Problem } from '@/hooks/useProblems';
+import { useMyRole } from '@/hooks/useRoles';
+import { useDeleteProblem } from '@/hooks/useDeleteProblem';
 import katex from 'katex';
 
 interface ProblemCardProps {
@@ -23,6 +27,9 @@ function renderLatex(text: string): string {
 
 export function ProblemCard({ problem, onClick, compact }: ProblemCardProps) {
   const statementRef = useRef<HTMLDivElement>(null);
+  const { data: role } = useMyRole();
+  const deleteProblem = useDeleteProblem();
+  const isDeveloper = role === 'developer';
   
   useEffect(() => {
     if (statementRef.current) {
@@ -36,6 +43,13 @@ export function ProblemCard({ problem, onClick, compact }: ProblemCardProps) {
     if (problem.difficulty <= 5) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
     if (problem.difficulty <= 7) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Are you sure you want to delete this problem?')) {
+      deleteProblem.mutate(problem.id);
+    }
   };
   
   return (
@@ -58,6 +72,17 @@ export function ProblemCard({ problem, onClick, compact }: ProblemCardProps) {
             <Badge className={difficultyColor()}>
               Level {problem.difficulty}
             </Badge>
+            {isDeveloper && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                onClick={handleDelete}
+                disabled={deleteProblem.isPending}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
