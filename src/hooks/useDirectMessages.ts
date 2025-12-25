@@ -8,6 +8,7 @@ export interface DirectMessage {
   sender_id: string;
   receiver_id: string;
   message: string;
+  image_url: string | null;
   is_read: boolean;
   created_at: string;
 }
@@ -72,7 +73,7 @@ export function useSendMessage() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ receiverId, message }: { receiverId: string; message: string }) => {
+    mutationFn: async ({ receiverId, message, imageUrl }: { receiverId: string; message: string; imageUrl?: string | null }) => {
       if (!user) throw new Error('Not authenticated');
 
       const { error } = await supabase
@@ -80,7 +81,8 @@ export function useSendMessage() {
         .insert({
           sender_id: user.id,
           receiver_id: receiverId,
-          message: message.trim()
+          message: message.trim(),
+          image_url: imageUrl || null,
         });
 
       if (error) throw error;
