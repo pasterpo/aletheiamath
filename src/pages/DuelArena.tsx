@@ -226,15 +226,31 @@ export default function DuelArena() {
     );
   }
 
-  // Waiting for opponent
+  // Waiting for opponent - with real-time subscription already set up
   if (duel.status === 'waiting') {
+    const isChallenger = duel.challenger_id === user?.id;
     return (
       <Layout>
         <div className="py-16 text-center">
           <Loader2 className="h-16 w-16 mx-auto text-primary mb-4 animate-spin" />
-          <h1 className="heading-section text-foreground mb-2">Waiting for Opponent</h1>
-          <p className="text-muted-foreground mb-6">Share this duel to challenge someone!</p>
-          <Button onClick={() => navigate('/duels')}>Back to Duels</Button>
+          <h1 className="heading-section text-foreground mb-2">
+            {isChallenger ? 'Waiting for Opponent' : 'Joining Duel...'}
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            {isChallenger 
+              ? 'The duel will start automatically when someone joins!' 
+              : 'Please wait...'}
+          </p>
+          {duel.problem && (
+            <div className="max-w-md mx-auto bg-secondary/50 rounded-lg p-4 mb-6">
+              <p className="text-sm text-muted-foreground mb-1">Problem</p>
+              <p className="font-semibold">{duel.problem.title}</p>
+              {duel.problem.difficulty && (
+                <Badge variant="outline" className="mt-2">Level {duel.problem.difficulty}</Badge>
+              )}
+            </div>
+          )}
+          <Button variant="outline" onClick={() => navigate('/duels')}>Back to Duels</Button>
         </div>
       </Layout>
     );

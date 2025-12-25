@@ -38,12 +38,13 @@ export default function Duels() {
     }
     
     try {
-      await createDuel.mutateAsync(undefined);
+      const newDuel = await createDuel.mutateAsync(undefined);
       toast({
         title: 'Duel Created!',
         description: 'Waiting for an opponent to join...',
       });
-      setActiveTab('my');
+      // Redirect to duel arena immediately - they'll wait there
+      navigate(`/duel/${newDuel.id}`);
     } catch (error) {
       toast({
         title: 'Failed to create duel',
@@ -257,7 +258,7 @@ export default function Duels() {
                       </h3>
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {waitingDuels.map((duel) => (
-                          <DuelCard key={duel.id} duel={duel} />
+                          <DuelCard key={duel.id} duel={duel} onView={() => handleViewDuel(duel.id)} />
                         ))}
                       </div>
                     </div>
