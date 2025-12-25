@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMyRole } from '@/hooks/useRoles';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Calendar, Loader2, Save } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, Save, Shield } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -19,6 +21,7 @@ interface Profile {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
+  const { data: role } = useMyRole();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -125,20 +128,39 @@ export default function Profile() {
 
             <div className="card-elevated p-6 md:p-8">
               {/* Profile Avatar */}
-              <div className="flex items-center gap-4 mb-8 pb-8 border-b border-border">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-8 w-8 text-primary" />
+              <div className="flex items-center justify-between gap-4 mb-8 pb-8 border-b border-border">
+                <div className="flex items-center gap-4">
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-8 w-8 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="font-serif text-xl font-semibold text-foreground">
+                      {profile?.full_name || 'AletheiaMath Student'}
+                    </h2>
+                    <p className="text-muted-foreground body-small">
+                      Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        year: 'numeric'
+                      }) : 'recently'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-serif text-xl font-semibold text-foreground">
-                    {profile?.full_name || 'AletheiaMath Student'}
-                  </h2>
-                  <p className="text-muted-foreground body-small">
-                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      year: 'numeric' 
-                    }) : 'recently'}
-                  </p>
+
+                <div className="flex items-center gap-3">
+                  {role && (
+                    <Badge variant="secondary" className="gap-2 capitalize">
+                      <Shield className="h-3.5 w-3.5" />
+                      {role}
+                    </Badge>
+                  )}
+                  {role && (role === 'developer' || role === 'staff' || role === 'moderator') && (
+                    <Link to="/admin">
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <Shield className="h-4 w-4" />
+                        Admin
+                      </Button>
+                    </Link>
+                  )}
                 </div>
               </div>
 
