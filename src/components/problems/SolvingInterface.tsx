@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ChevronDown, ChevronUp, Lightbulb, Eye, EyeOff, Check, X, SkipForward, TrendingUp, TrendingDown } from 'lucide-react';
+import { ChevronDown, ChevronUp, Lightbulb, Eye, EyeOff, Check, X, SkipForward, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Problem } from '@/hooks/useProblems';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useMyRating, useUpdateRating, calculateRatingChange } from '@/hooks/useRating';
+import { useMyRating } from '@/hooks/useRating';
 import { useSkipsForCategory, useRecordSkip } from '@/hooks/useSkips';
+import { supabase } from '@/integrations/supabase/client';
 import katex from 'katex';
 
 interface SolvingInterfaceProps {
@@ -27,50 +28,6 @@ function renderLatex(text: string): string {
   });
 }
 
-// Parse and evaluate fraction strings like "1/2" to decimal
-function parseFraction(str: string): number | null {
-  str = str.trim();
-  
-  // Direct number
-  const directNum = parseFloat(str);
-  if (!isNaN(directNum) && !str.includes('/')) {
-    return directNum;
-  }
-  
-  // Fraction format
-  const fractionMatch = str.match(/^(-?\d+)\s*\/\s*(\d+)$/);
-  if (fractionMatch) {
-    const numerator = parseInt(fractionMatch[1]);
-    const denominator = parseInt(fractionMatch[2]);
-    if (denominator !== 0) {
-      return numerator / denominator;
-    }
-  }
-  
-  return null;
-}
-
-function compareAnswers(userAnswer: string, correctAnswer: string, answerType: string | null): boolean {
-  const userClean = userAnswer.trim().toLowerCase();
-  const correctClean = correctAnswer.trim().toLowerCase();
-  
-  if (answerType === 'exact') {
-    return userClean === correctClean;
-  }
-  
-  if (answerType === 'numeric' || answerType === 'fraction') {
-    const userNum = parseFraction(userClean);
-    const correctNum = parseFraction(correctClean);
-    
-    if (userNum !== null && correctNum !== null) {
-      return Math.abs(userNum - correctNum) < 0.001;
-    }
-  }
-  
-  // Fallback to exact match
-  return userClean === correctClean;
-}
-
 export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceProps) {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -79,14 +36,18 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
   const [showSolution, setShowSolution] = useState(false);
   const [result, setResult] = useState<'correct' | 'incorrect' | null>(null);
   const [ratingChange, setRatingChange] = useState<number>(0);
+  const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
   
   const statementRef = useRef<HTMLDivElement>(null);
   const solutionRef = useRef<HTMLDivElement>(null);
   
-  const { data: myRating } = useMyRating();
-  const updateRating = useUpdateRating();
+  const { data: myRating, refetch: refetchRating } = useMyRating();
   const { data: skipData } = useSkipsForCategory(problem.category_id);
   const recordSkip = useRecordSkip();
+
+  // Get problem with image
+  const problemWithImage = problem as Problem & { image_url?: string };
 
   useEffect(() => {
     if (statementRef.current) {
@@ -99,6 +60,16 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
       solutionRef.current.innerHTML = renderLatex(problem.solution);
     }
   }, [problem.solution, showSolution]);
+
+  // Reset state when problem changes
+  useEffect(() => {
+    setUserAnswer('');
+    setResult(null);
+    setRatingChange(0);
+    setCorrectAnswer(null);
+    setShowHints([]);
+    setShowSolution(false);
+  }, [problem.id]);
 
   const toggleHint = (index: number) => {
     setShowHints(prev =>
@@ -127,27 +98,24 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
       return;
     }
 
-    if (!problem.answer) {
-      toast({
-        title: 'No answer key',
-        description: 'This problem does not have an answer key for verification',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    const isCorrect = compareAnswers(userAnswer, problem.answer, problem.answer_type);
-    const change = calculateRatingChange(problem.difficulty || 5, isCorrect);
-    
-    setResult(isCorrect ? 'correct' : 'incorrect');
-    setRatingChange(change);
+    setSubmitting(true);
 
     try {
-      await updateRating.mutateAsync({
-        ratingChange: change,
-        pointsChange: isCorrect ? Math.abs(change) : 0,
-        solved: isCorrect,
+      // Call edge function for secure server-side verification
+      const { data, error } = await supabase.functions.invoke('verify-answer', {
+        body: { problemId: problem.id, userAnswer: userAnswer.trim() },
       });
+
+      if (error) throw error;
+
+      const { isCorrect, ratingChange: change, correctAnswer: answer } = data;
+      
+      setResult(isCorrect ? 'correct' : 'incorrect');
+      setRatingChange(change);
+      if (answer) setCorrectAnswer(answer);
+
+      // Refetch rating to show updated value
+      refetchRating();
 
       toast({
         title: isCorrect ? '🎉 Correct!' : '❌ Incorrect',
@@ -155,8 +123,15 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
           ? `You earned ${change} rating points!` 
           : `You lost ${Math.abs(change)} rating points.`,
       });
-    } catch (error) {
-      console.error('Failed to update rating:', error);
+    } catch (error: any) {
+      console.error('Failed to verify answer:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to verify answer',
+        variant: 'destructive',
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -252,7 +227,17 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
             </p>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {/* Problem Image */}
+          {problemWithImage.image_url && (
+            <div className="rounded-lg overflow-hidden border">
+              <img 
+                src={problemWithImage.image_url} 
+                alt="Problem statement" 
+                className="w-full max-h-96 object-contain bg-background"
+              />
+            </div>
+          )}
           <div ref={statementRef} className="text-lg leading-relaxed" />
         </CardContent>
       </Card>
@@ -302,8 +287,13 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
             value={userAnswer}
             onChange={(e) => setUserAnswer(e.target.value)}
             placeholder="Enter your answer..."
-            disabled={result !== null}
+            disabled={result !== null || submitting}
             className={result ? (result === 'correct' ? 'border-green-500' : 'border-red-500') : ''}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !result && !submitting) {
+                handleSubmit();
+              }
+            }}
           />
           
           {result && (
@@ -314,7 +304,7 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
             }`}>
               {result === 'correct' ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
               <span className="font-medium">
-                {result === 'correct' ? 'Correct! Well done!' : `Incorrect. The answer was: ${problem.answer}`}
+                {result === 'correct' ? 'Correct! Well done!' : `Incorrect. The answer was: ${correctAnswer}`}
               </span>
             </div>
           )}
@@ -322,9 +312,13 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
           <div className="flex flex-wrap gap-3">
             {!result && (
               <>
-                <Button onClick={handleSubmit} disabled={!problem.answer}>
-                  <Check className="w-4 h-4 mr-2" />
-                  Submit Answer
+                <Button onClick={handleSubmit} disabled={submitting}>
+                  {submitting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  {submitting ? 'Verifying...' : 'Submit Answer'}
                 </Button>
                 <Button 
                   variant="outline" 

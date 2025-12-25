@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Users, Plus, BookOpen, Settings, Award } from 'lucide-react';
+import { Shield, Users, Plus, BookOpen, Settings, Award, Sliders } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { ProblemManagement } from '@/components/admin/ProblemManagement';
+import { UIPermissionManager } from '@/components/admin/UIPermissionManager';
 import { Badge } from '@/components/ui/badge';
 
 export default function AdminDashboard() {
@@ -79,7 +80,7 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 gap-2 h-auto p-2 bg-secondary/50">
+            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 gap-2 h-auto p-2 bg-secondary/50">
               <TabsTrigger value="overview" className="gap-2">
                 <Settings className="w-4 h-4" />
                 Overview
@@ -94,6 +95,12 @@ export default function AdminDashboard() {
                 <BookOpen className="w-4 h-4" />
                 Problems
               </TabsTrigger>
+              {role === 'developer' && (
+                <TabsTrigger value="ui-permissions" className="gap-2">
+                  <Sliders className="w-4 h-4" />
+                  UI Control
+                </TabsTrigger>
+              )}
               <TabsTrigger value="stats" className="gap-2">
                 <Award className="w-4 h-4" />
                 Statistics
@@ -182,6 +189,12 @@ export default function AdminDashboard() {
             <TabsContent value="problems">
               <ProblemManagement />
             </TabsContent>
+
+            {role === 'developer' && (
+              <TabsContent value="ui-permissions">
+                <UIPermissionManager />
+              </TabsContent>
+            )}
 
             <TabsContent value="stats">
               <Card>

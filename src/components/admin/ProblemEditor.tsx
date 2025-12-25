@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Save } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ArrowLeft, Save, Upload, X, Image as ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: existingProblem } = useProblem(problemId || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -36,16 +37,20 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
     solution: '',
     tags: '',
     is_published: true,
+    image_url: '',
   });
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (existingProblem) {
+      const problemWithImage = existingProblem as any;
       setFormData({
         title: existingProblem.title || '',
         statement: existingProblem.statement || '',
-        answer: (existingProblem as any).answer || '',
-        answer_type: (existingProblem as any).answer_type || 'exact',
+        answer: problemWithImage.answer || '',
+        answer_type: problemWithImage.answer_type || 'exact',
         difficulty: existingProblem.difficulty?.toString() || '5',
         category_id: existingProblem.category_id || '',
         source: existingProblem.source || '',
@@ -54,9 +59,76 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         solution: existingProblem.solution || '',
         tags: existingProblem.tags?.join(', ') || '',
         is_published: true,
+        image_url: problemWithImage.image_url || '',
       });
+      if (problemWithImage.image_url) {
+        setImagePreview(problemWithImage.image_url);
+      }
     }
   }, [existingProblem]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Please upload an image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'File too large',
+        description: 'Image must be less than 5MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `problems/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('problem-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('problem-images')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, image_url: publicUrl }));
+      setImagePreview(publicUrl);
+      
+      toast({ title: 'Image uploaded successfully' });
+    } catch (error: any) {
+      toast({
+        title: 'Upload failed',
+        description: error.message || 'Failed to upload image',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeImage = () => {
+    setFormData(prev => ({ ...prev, image_url: '' }));
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,6 +148,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         solution: formData.solution || null,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : null,
         is_published: formData.is_published,
+        image_url: formData.image_url || null,
       };
 
       if (problemId) {
@@ -149,6 +222,54 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Problem Image Upload */}
+          <div className="space-y-2">
+            <Label>Problem Image (optional)</Label>
+            <div className="border-2 border-dashed border-border rounded-lg p-4">
+              {imagePreview ? (
+                <div className="relative">
+                  <img 
+                    src={imagePreview} 
+                    alt="Problem" 
+                    className="max-h-64 mx-auto rounded-lg"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={removeImage}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ImageIcon className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload an image of the problem statement
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    {uploading ? 'Uploading...' : 'Choose Image'}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 

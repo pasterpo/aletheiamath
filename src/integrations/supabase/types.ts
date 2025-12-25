@@ -205,6 +205,7 @@ export type Database = {
           difficulty: number | null
           hints: string[] | null
           id: string
+          image_url: string | null
           is_published: boolean | null
           solution: string | null
           source: string | null
@@ -222,6 +223,7 @@ export type Database = {
           difficulty?: number | null
           hints?: string[] | null
           id?: string
+          image_url?: string | null
           is_published?: boolean | null
           solution?: string | null
           source?: string | null
@@ -239,6 +241,7 @@ export type Database = {
           difficulty?: number | null
           hints?: string[] | null
           id?: string
+          image_url?: string | null
           is_published?: boolean | null
           solution?: string | null
           source?: string | null
@@ -331,6 +334,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ui_permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          element_key: string
+          element_name: string
+          element_type: string
+          id: string
+          interactable_by_roles: string[]
+          updated_at: string
+          visible_to_roles: string[]
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          element_key: string
+          element_name: string
+          element_type?: string
+          id?: string
+          interactable_by_roles?: string[]
+          updated_at?: string
+          visible_to_roles?: string[]
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          element_key?: string
+          element_name?: string
+          element_type?: string
+          id?: string
+          interactable_by_roles?: string[]
+          updated_at?: string
+          visible_to_roles?: string[]
+        }
+        Relationships: []
       }
       user_achievements: {
         Row: {
