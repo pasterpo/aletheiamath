@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Youtube, ExternalLink } from 'lucide-react';
+import { Mail, Youtube, ExternalLink, Send } from 'lucide-react';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -31,6 +31,15 @@ export function Footer() {
                 aria-label="YouTube Channel"
               >
                 <Youtube className="h-5 w-5" />
+              </a>
+              <a
+                href="https://t.me/AletheiaOlympiadsChannel"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors"
+                aria-label="Telegram Channel"
+              >
+                <Send className="h-5 w-5" />
               </a>
               <a
                 href="mailto:contact@aletheiamath.org"

@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_users: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string | null
+          id: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string | null
+          id?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -81,6 +102,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           is_read: boolean
           message: string
           receiver_id: string
@@ -89,6 +111,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_read?: boolean
           message: string
           receiver_id: string
@@ -97,6 +120,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_read?: boolean
           message?: string
           receiver_id?: string
@@ -108,20 +132,67 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           message: string
+          topic_id: string | null
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           message: string
+          topic_id?: string | null
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           message?: string
+          topic_id?: string | null
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discussion_messages_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "discussion_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discussion_topics: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          last_message_at: string | null
+          message_count: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number | null
+          name?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -282,6 +353,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_published: boolean | null
+          section: string | null
           solution: string | null
           source: string | null
           statement: string
@@ -302,6 +374,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_published?: boolean | null
+          section?: string | null
           solution?: string | null
           source?: string | null
           statement: string
@@ -322,6 +395,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_published?: boolean | null
+          section?: string | null
           solution?: string | null
           source?: string | null
           statement?: string
@@ -508,6 +582,38 @@ export type Database = {
           },
         ]
       }
+      user_attempted_problems: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          problem_id: string
+          result: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          problem_id: string
+          result: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          problem_id?: string
+          result?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_attempted_problems_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_daily_skips: {
         Row: {
           category_id: string
@@ -542,6 +648,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_global_daily_skips: {
+        Row: {
+          created_at: string | null
+          id: string
+          skip_count: number
+          skip_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          skip_count?: number
+          skip_date?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          skip_count?: number
+          skip_date?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_problem_stats: {
         Row: {
@@ -610,6 +740,30 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          theme?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
