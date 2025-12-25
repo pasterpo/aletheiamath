@@ -78,7 +78,7 @@ export function useCreateDuel() {
     mutationFn: async (problemId?: string) => {
       if (!user) throw new Error('Not authenticated');
       
-      // If no problem specified, get a random one
+      // If no problem specified, get a random published one
       let selectedProblemId = problemId;
       if (!selectedProblemId) {
         const { data: problems } = await supabase
@@ -88,6 +88,8 @@ export function useCreateDuel() {
         
         if (problems && problems.length > 0) {
           selectedProblemId = problems[Math.floor(Math.random() * problems.length)].id;
+        } else {
+          throw new Error('No problems available for duels');
         }
       }
       
@@ -98,11 +100,14 @@ export function useCreateDuel() {
           problem_id: selectedProblemId,
           status: 'waiting',
         })
-        .select()
+        .select(`
+          *,
+          problem:problems(id, title, statement, difficulty)
+        `)
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Duel;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['duels'] });
@@ -127,11 +132,15 @@ export function useJoinDuel() {
         })
         .eq('id', duelId)
         .eq('status', 'waiting')
-        .select()
+        .select(`
+          *,
+          problem:problems(id, title, statement, difficulty)
+        `)
         .single();
       
       if (error) throw error;
-      return data;
+      if (!data) throw new Error('Duel not available');
+      return data as Duel;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['duels'] });

@@ -100,6 +100,11 @@ export function DuelCard({ duel, onJoin, onView }: DuelCardProps) {
               Join Duel
             </Button>
           )}
+          {duel.status === 'waiting' && isChallenger && onView && (
+            <Button onClick={onView} className="w-full" variant="outline">
+              View Waiting Room
+            </Button>
+          )}
           {isParticipant && duel.status === 'active' && onView && (
             <Button onClick={onView} className="w-full">
               Enter Arena
