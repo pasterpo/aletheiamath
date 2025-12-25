@@ -20,6 +20,7 @@ import {
 import { StatsDashboard } from '@/components/profile/StatsDashboard';
 import { RatingChart } from '@/components/profile/RatingChart';
 import { ActivityCalendar } from '@/components/profile/ActivityCalendar';
+import { AchievementsDisplay } from '@/components/profile/AchievementsDisplay';
 
 interface Profile {
   id: string;
@@ -332,13 +333,18 @@ export default function Profile() {
 
           {/* Stats Dashboard Tabs */}
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="dashboard">Performance Dashboard</TabsTrigger>
-              <TabsTrigger value="details">Account Details</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 mb-6">
+              <TabsTrigger value="dashboard">Performance</TabsTrigger>
+              <TabsTrigger value="achievements">Achievements</TabsTrigger>
+              <TabsTrigger value="details">Account</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
               <StatsDashboard userId={targetUserId} />
+            </TabsContent>
+
+            <TabsContent value="achievements">
+              <AchievementsDisplay userId={targetUserId} />
             </TabsContent>
 
             <TabsContent value="details">
