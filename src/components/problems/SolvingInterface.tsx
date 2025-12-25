@@ -8,7 +8,7 @@ import { Problem } from '@/hooks/useProblems';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useMyRating } from '@/hooks/useRating';
-import { useSkipsForCategory, useRecordSkip } from '@/hooks/useSkips';
+import { useGlobalSkips, useRecordGlobalSkip } from '@/hooks/useGlobalSkips';
 import { supabase } from '@/integrations/supabase/client';
 import katex from 'katex';
 
@@ -43,8 +43,8 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
   const solutionRef = useRef<HTMLDivElement>(null);
   
   const { data: myRating, refetch: refetchRating } = useMyRating();
-  const { data: skipData } = useSkipsForCategory(problem.category_id);
-  const recordSkip = useRecordSkip();
+  const { data: skipData } = useGlobalSkips();
+  const recordSkip = useRecordGlobalSkip();
 
   // Get problem with image
   const problemWithImage = problem as Problem & { image_url?: string };
@@ -120,7 +120,7 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
       toast({
         title: isCorrect ? '🎉 Correct!' : '❌ Incorrect',
         description: isCorrect 
-          ? `You earned ${change} rating points!` 
+          ? `You earned +${change} rating points!` 
           : `You lost ${Math.abs(change)} rating points.`,
       });
     } catch (error: any) {
@@ -145,45 +145,22 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
       return;
     }
 
-    if (!problem.category_id) {
-      onNext?.();
-      return;
-    }
-
-    if (!skipData?.canSkip) {
-      toast({
-        title: 'Skip limit reached',
-        description: 'You have used all 3 skips for this category today',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     try {
-      // Record the skip
-      await recordSkip.mutateAsync(problem.category_id);
+      const result = await recordSkip.mutateAsync(problem.id);
       
-      // Apply -30 rating penalty for skipping
-      const { data: currentStats } = await supabase
-        .from('user_stats')
-        .select('rating')
-        .eq('user_id', user.id)
-        .single();
+      refetchRating();
 
-      if (currentStats) {
-        const newRating = Math.max(0, (currentStats.rating || 1000) - 30);
-        await supabase
-          .from('user_stats')
-          .update({ rating: newRating, last_activity_at: new Date().toISOString() })
-          .eq('user_id', user.id);
-        
-        refetchRating();
+      if (result.appliedPenalty) {
+        toast({
+          title: 'Problem skipped (-30 rating)',
+          description: 'You have used all your free skips for today',
+        });
+      } else {
+        toast({
+          title: 'Problem skipped (free)',
+          description: `${result.remaining} free skips remaining today`,
+        });
       }
-
-      toast({
-        title: 'Problem skipped (-30 rating)',
-        description: `${skipData.remaining - 1} skips remaining for this category today`,
-      });
       onNext?.();
     } catch (error: any) {
       toast({
@@ -195,10 +172,10 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
   };
 
   const difficultyColor = () => {
-    if (!problem.difficulty) return 'bg-muted text-muted-foreground';
-    if (problem.difficulty <= 3) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-    if (problem.difficulty <= 5) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
-    if (problem.difficulty <= 7) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+    const diff = problem.difficulty || 50;
+    if (diff <= 30) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+    if (diff <= 50) return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400';
+    if (diff <= 70) return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
     return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
   };
 
@@ -236,7 +213,7 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
                 </Badge>
               )}
               <Badge className={difficultyColor()}>
-                Level {problem.difficulty}
+                Difficulty {problem.difficulty}
               </Badge>
             </div>
           </div>
@@ -342,10 +319,10 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
                 <Button 
                   variant="outline" 
                   onClick={handleSkip}
-                  disabled={!skipData?.canSkip}
+                  disabled={recordSkip.isPending}
                 >
                   <SkipForward className="w-4 h-4 mr-2" />
-                  Skip ({skipData?.remaining ?? 3} left)
+                  Skip ({skipData?.remaining ?? 3} free left)
                 </Button>
               </>
             )}

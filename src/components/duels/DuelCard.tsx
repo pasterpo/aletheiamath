@@ -1,4 +1,4 @@
-import { Swords, Clock, Trophy, User } from 'lucide-react';
+import { Swords, Clock, Trophy, User, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ interface DuelCardProps {
   duel: Duel;
   onJoin?: () => void;
   onView?: () => void;
+  onCancel?: () => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -18,7 +19,7 @@ const statusColors: Record<string, string> = {
   cancelled: 'bg-muted text-muted-foreground',
 };
 
-export function DuelCard({ duel, onJoin, onView }: DuelCardProps) {
+export function DuelCard({ duel, onJoin, onView, onCancel }: DuelCardProps) {
   const { user } = useAuth();
   const isChallenger = duel.challenger_id === user?.id;
   const isOpponent = duel.opponent_id === user?.id;
@@ -100,10 +101,19 @@ export function DuelCard({ duel, onJoin, onView }: DuelCardProps) {
               Join Duel
             </Button>
           )}
-          {duel.status === 'waiting' && isChallenger && onView && (
-            <Button onClick={onView} className="w-full" variant="outline">
-              View Waiting Room
-            </Button>
+          {duel.status === 'waiting' && isChallenger && (
+            <div className="flex gap-2 w-full">
+              {onView && (
+                <Button onClick={onView} className="flex-1" variant="outline">
+                  View Waiting Room
+                </Button>
+              )}
+              {onCancel && (
+                <Button onClick={onCancel} variant="destructive" size="icon">
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           )}
           {isParticipant && duel.status === 'active' && onView && (
             <Button onClick={onView} className="w-full">

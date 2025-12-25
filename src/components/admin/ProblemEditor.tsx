@@ -18,6 +18,9 @@ interface ProblemEditorProps {
   onClose: () => void;
 }
 
+// Difficulty levels from 10 to 100 in steps of 10
+const DIFFICULTY_LEVELS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
 export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -29,7 +32,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
     statement: '',
     answer: '',
     answer_type: 'exact',
-    difficulty: '5',
+    difficulty: '50',
     category_id: '',
     source: '',
     year: '',
@@ -51,7 +54,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         statement: existingProblem.statement || '',
         answer: problemWithImage.answer || '',
         answer_type: problemWithImage.answer_type || 'exact',
-        difficulty: existingProblem.difficulty?.toString() || '5',
+        difficulty: existingProblem.difficulty?.toString() || '50',
         category_id: existingProblem.category_id || '',
         source: existingProblem.source || '',
         year: existingProblem.year?.toString() || '',
@@ -179,6 +182,12 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
     } finally {
       setSaving(false);
     }
+  };
+
+  const getDifficultyLabel = (diff: number) => {
+    if (diff <= 30) return 'Easy';
+    if (diff <= 60) return 'Medium';
+    return 'Hard';
   };
 
   return (
@@ -320,7 +329,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
           {/* Difficulty and Source */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="difficulty">Difficulty (1-10)</Label>
+              <Label htmlFor="difficulty">Difficulty (10-100)</Label>
               <Select
                 value={formData.difficulty}
                 onValueChange={(value) => setFormData({ ...formData, difficulty: value })}
@@ -329,13 +338,16 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((level) => (
+                  {DIFFICULTY_LEVELS.map((level) => (
                     <SelectItem key={level} value={level.toString()}>
-                      Level {level} {level <= 3 ? '(Easy)' : level <= 6 ? '(Medium)' : '(Hard)'}
+                      {level} ({getDifficultyLabel(level)})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Rating: +{formData.difficulty} correct, -{110 - parseInt(formData.difficulty)} wrong
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="source">Source</Label>

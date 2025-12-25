@@ -149,7 +149,7 @@ export default function DuelArena() {
       const otherAnswered = isChallenger ? duel.opponent_answer : duel.challenger_answer;
       
       if (otherAnswered) {
-        // Both have answered, determine winner
+        // Both have answered, determine winner based on FASTEST CORRECT answer
         const correctAnswer = duel.problem?.answer?.toLowerCase().trim();
         const myAnswerCorrect = answer.trim().toLowerCase() === correctAnswer;
         const otherAnswer = (otherAnswered as string).toLowerCase().trim();
@@ -161,18 +161,21 @@ export default function DuelArena() {
         let winnerId: string | null = null;
         
         if (myAnswerCorrect && !otherAnswerCorrect) {
+          // Only I got it right
           winnerId = user.id;
         } else if (!myAnswerCorrect && otherAnswerCorrect) {
+          // Only opponent got it right
           winnerId = isChallenger ? duel.opponent_id : duel.challenger_id;
         } else if (myAnswerCorrect && otherAnswerCorrect) {
-          // Both correct, faster wins
+          // Both correct - FASTER TIME wins
           if (myTime < (otherTime || Infinity)) {
             winnerId = user.id;
-          } else {
+          } else if ((otherTime || Infinity) < myTime) {
             winnerId = isChallenger ? duel.opponent_id : duel.challenger_id;
           }
+          // If times are equal, it's a draw (winnerId stays null)
         }
-        // If both wrong, no winner
+        // If both wrong, winnerId is null = draw
 
         updateData.status = 'completed';
         updateData.completed_at = new Date().toISOString();
