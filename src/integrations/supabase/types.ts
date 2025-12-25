@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string
+          icon: string | null
+          id: string
+          name: string
+          points: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description: string
+          icon?: string | null
+          id?: string
+          name: string
+          points?: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          points?: number | null
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -40,6 +76,181 @@ export type Database = {
           subject?: string
         }
         Relationships: []
+      }
+      duels: {
+        Row: {
+          challenger_answer: string | null
+          challenger_id: string
+          challenger_time_seconds: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          opponent_answer: string | null
+          opponent_id: string | null
+          opponent_time_seconds: number | null
+          problem_id: string | null
+          started_at: string | null
+          status: string | null
+          winner_id: string | null
+        }
+        Insert: {
+          challenger_answer?: string | null
+          challenger_id: string
+          challenger_time_seconds?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          opponent_answer?: string | null
+          opponent_id?: string | null
+          opponent_time_seconds?: number | null
+          problem_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          winner_id?: string | null
+        }
+        Update: {
+          challenger_answer?: string | null
+          challenger_id?: string
+          challenger_time_seconds?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          opponent_answer?: string | null
+          opponent_id?: string | null
+          opponent_time_seconds?: number | null
+          problem_id?: string | null
+          started_at?: string | null
+          status?: string | null
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "duels_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imo_waitlist: {
+        Row: {
+          country: string | null
+          created_at: string
+          current_level: string | null
+          email: string
+          experience: string | null
+          full_name: string
+          id: string
+          motivation: string | null
+          user_id: string | null
+        }
+        Insert: {
+          country?: string | null
+          created_at?: string
+          current_level?: string | null
+          email: string
+          experience?: string | null
+          full_name: string
+          id?: string
+          motivation?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          country?: string | null
+          created_at?: string
+          current_level?: string | null
+          email?: string
+          experience?: string | null
+          full_name?: string
+          id?: string
+          motivation?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      problem_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      problems: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          difficulty: number | null
+          hints: string[] | null
+          id: string
+          is_published: boolean | null
+          solution: string | null
+          source: string | null
+          statement: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          difficulty?: number | null
+          hints?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          solution?: string | null
+          source?: string | null
+          statement: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          difficulty?: number | null
+          hints?: string[] | null
+          id?: string
+          is_published?: boolean | null
+          solution?: string | null
+          source?: string | null
+          statement?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "problems_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "problem_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -71,6 +282,79 @@ export type Database = {
         }
         Relationships: []
       }
+      solution_submissions: {
+        Row: {
+          feedback: string | null
+          id: string
+          points_earned: number | null
+          problem_id: string
+          reviewed_at: string | null
+          solution_text: string
+          status: string | null
+          submitted_at: string
+          user_id: string
+        }
+        Insert: {
+          feedback?: string | null
+          id?: string
+          points_earned?: number | null
+          problem_id: string
+          reviewed_at?: string | null
+          solution_text: string
+          status?: string | null
+          submitted_at?: string
+          user_id: string
+        }
+        Update: {
+          feedback?: string | null
+          id?: string
+          points_earned?: number | null
+          problem_id?: string
+          reviewed_at?: string | null
+          solution_text?: string
+          status?: string | null
+          submitted_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solution_submissions_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "problems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          earned_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          earned_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          earned_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -91,6 +375,172 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_stats: {
+        Row: {
+          current_streak: number | null
+          duels_played: number | null
+          duels_won: number | null
+          id: string
+          last_activity_at: string | null
+          longest_streak: number | null
+          problems_solved: number | null
+          total_points: number | null
+          updated_at: string
+          user_id: string
+          videos_watched: number | null
+        }
+        Insert: {
+          current_streak?: number | null
+          duels_played?: number | null
+          duels_won?: number | null
+          id?: string
+          last_activity_at?: string | null
+          longest_streak?: number | null
+          problems_solved?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id: string
+          videos_watched?: number | null
+        }
+        Update: {
+          current_streak?: number | null
+          duels_played?: number | null
+          duels_won?: number | null
+          id?: string
+          last_activity_at?: string | null
+          longest_streak?: number | null
+          problems_solved?: number | null
+          total_points?: number | null
+          updated_at?: string
+          user_id?: string
+          videos_watched?: number | null
+        }
+        Relationships: []
+      }
+      video_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      video_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string
+          id: string
+          last_watched_at: string | null
+          user_id: string
+          video_id: string
+          watched_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          user_id: string
+          video_id: string
+          watched_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string
+          id?: string
+          last_watched_at?: string | null
+          user_id?: string
+          video_id?: string
+          watched_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_progress_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      videos: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          description: string | null
+          difficulty: string | null
+          duration_seconds: number | null
+          id: string
+          is_featured: boolean | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          view_count: number | null
+          youtube_id: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          view_count?: number | null
+          youtube_id: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          description?: string | null
+          difficulty?: string | null
+          duration_seconds?: number | null
+          id?: string
+          is_featured?: boolean | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          view_count?: number | null
+          youtube_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "videos_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "video_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
