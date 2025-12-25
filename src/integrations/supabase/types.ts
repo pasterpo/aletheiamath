@@ -198,6 +198,8 @@ export type Database = {
       }
       problems: {
         Row: {
+          answer: string | null
+          answer_type: string | null
           category_id: string | null
           created_at: string
           difficulty: number | null
@@ -213,6 +215,8 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          answer?: string | null
+          answer_type?: string | null
           category_id?: string | null
           created_at?: string
           difficulty?: number | null
@@ -228,6 +232,8 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          answer?: string | null
+          answer_type?: string | null
           category_id?: string | null
           created_at?: string
           difficulty?: number | null
@@ -355,6 +361,41 @@ export type Database = {
           },
         ]
       }
+      user_daily_skips: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          skip_count: number
+          skip_date: string
+          user_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          skip_count?: number
+          skip_date?: string
+          user_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          skip_count?: number
+          skip_date?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_daily_skips_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "problem_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -385,6 +426,7 @@ export type Database = {
           last_activity_at: string | null
           longest_streak: number | null
           problems_solved: number | null
+          rating: number | null
           total_points: number | null
           updated_at: string
           user_id: string
@@ -398,6 +440,7 @@ export type Database = {
           last_activity_at?: string | null
           longest_streak?: number | null
           problems_solved?: number | null
+          rating?: number | null
           total_points?: number | null
           updated_at?: string
           user_id: string
@@ -411,6 +454,7 @@ export type Database = {
           last_activity_at?: string | null
           longest_streak?: number | null
           problems_solved?: number | null
+          rating?: number | null
           total_points?: number | null
           updated_at?: string
           user_id?: string
@@ -554,9 +598,16 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_role_or_higher: {
+        Args: {
+          _min_role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "developer" | "staff" | "moderator" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -684,7 +735,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["developer", "staff", "moderator", "member"],
     },
   },
 } as const

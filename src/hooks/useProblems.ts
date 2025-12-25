@@ -21,6 +21,8 @@ export interface Problem {
   year: number | null;
   difficulty: number | null;
   tags: string[] | null;
+  answer: string | null;
+  answer_type: string | null;
   category?: ProblemCategory;
 }
 
