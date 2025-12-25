@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useLeaderboard, useMyStats } from '@/hooks/useLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Leaderboard() {
@@ -34,9 +34,10 @@ export default function Leaderboard() {
       {data.slice(0, 20).map((stat, index) => {
         const isCurrentUser = user && stat.user_id === user.id;
         return (
-          <div 
+          <Link 
             key={stat.id} 
-            className={`flex items-center gap-4 p-3 rounded-lg ${isCurrentUser ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50'}`}
+            to={`/profile?id=${stat.user_id}`}
+            className={`flex items-center gap-4 p-3 rounded-lg cursor-pointer transition-colors ${isCurrentUser ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50 hover:bg-secondary'}`}
           >
             <div className="w-8 flex justify-center">{getRankIcon(index + 1)}</div>
             <Avatar className="w-8 h-8">
@@ -44,7 +45,7 @@ export default function Leaderboard() {
               <AvatarFallback>{stat.profile?.full_name?.charAt(0) || '?'}</AvatarFallback>
             </Avatar>
             <div className="flex-1">
-              <p className="font-medium">
+              <p className="font-medium hover:underline">
                 {stat.profile?.full_name || 'Anonymous'}
                 {isCurrentUser && <span className="text-primary ml-2">(You)</span>}
               </p>
@@ -53,7 +54,7 @@ export default function Leaderboard() {
               <p className="font-bold text-primary">{stat[valueKey] || 0}</p>
               <p className="text-xs text-muted-foreground">{valueLabel}</p>
             </div>
-          </div>
+          </Link>
         );
       })}
       {data.length === 0 && (
