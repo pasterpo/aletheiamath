@@ -16,6 +16,9 @@ import Duels from "./pages/Duels";
 import Leaderboard from "./pages/Leaderboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import AletheiaRating from "./pages/AletheiaRating";
+import Discussion from "./pages/Discussion";
+import UsersList from "./pages/UsersList";
+import DuelArena from "./pages/DuelArena";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,9 +40,12 @@ const App = () => (
             <Route path="/problems" element={<Problems />} />
             <Route path="/imo-2027" element={<IMO2027 />} />
             <Route path="/duels" element={<Duels />} />
+            <Route path="/duel/:duelId" element={<DuelArena />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/aletheia-rating" element={<AletheiaRating />} />
+            <Route path="/discussion" element={<Discussion />} />
+            <Route path="/users" element={<UsersList />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

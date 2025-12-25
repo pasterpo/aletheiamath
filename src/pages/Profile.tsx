@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useParams, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,27 +7,40 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMyRole } from '@/hooks/useRoles';
+import { useMyRole, useUpdateUserRole, AppRole } from '@/hooks/useRoles';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Calendar, Loader2, Save, Shield } from 'lucide-react';
+import { User, Mail, Calendar, Loader2, Save, Shield, UserPlus } from 'lucide-react';
 
 interface Profile {
   id: string;
+  user_id: string;
   full_name: string | null;
   email: string | null;
   created_at: string;
 }
 
+interface UserRoleData {
+  role: AppRole;
+}
+
 export default function Profile() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const viewUserId = searchParams.get('id');
   const { user, loading: authLoading, signOut } = useAuth();
-  const { data: role, isLoading: roleLoading, refetch: refetchRole } = useMyRole();
+  const { data: myRole, isLoading: roleLoading } = useMyRole();
+  const updateRole = useUpdateUserRole();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [viewedUserRole, setViewedUserRole] = useState<AppRole>('member');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fullName, setFullName] = useState('');
+
+  const isViewingOther = viewUserId && viewUserId !== user?.id;
+  const isDeveloper = myRole === 'developer';
+  const targetUserId = viewUserId || user?.id;
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -36,26 +49,39 @@ export default function Profile() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    if (user) {
-      fetchProfile();
+    if (targetUserId) {
+      fetchProfile(targetUserId);
     }
-  }, [user]);
+  }, [targetUserId]);
 
-  const fetchProfile = async () => {
-    if (!user) return;
-
+  const fetchProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (error) throw error;
 
       if (data) {
         setProfile(data);
-        setFullName(data.full_name || '');
+        if (!isViewingOther) {
+          setFullName(data.full_name || '');
+        }
+      }
+
+      // Fetch role for viewed user
+      if (isDeveloper && userId !== user?.id) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
+        
+        if (roleData) {
+          setViewedUserRole((roleData as UserRoleData).role);
+        }
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -81,7 +107,7 @@ export default function Profile() {
         description: 'Your changes have been saved.',
       });
 
-      fetchProfile();
+      fetchProfile(user.id);
     } catch (error) {
       toast({
         title: 'Update failed',
@@ -90,6 +116,25 @@ export default function Profile() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePromote = async () => {
+    if (!viewUserId || !isDeveloper) return;
+
+    try {
+      await updateRole.mutateAsync({ userId: viewUserId, newRole: 'staff' });
+      setViewedUserRole('staff');
+      toast({
+        title: 'User promoted',
+        description: 'User has been promoted to staff',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to promote',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -119,10 +164,10 @@ export default function Profile() {
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <h1 className="heading-section text-foreground mb-2">
-                Your Profile
+                {isViewingOther ? 'User Profile' : 'Your Profile'}
               </h1>
               <p className="body-regular text-muted-foreground">
-                Manage your account information
+                {isViewingOther ? 'View user information' : 'Manage your account information'}
               </p>
             </div>
 
@@ -147,97 +192,134 @@ export default function Profile() {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="gap-2 capitalize">
-                    <Shield className="h-3.5 w-3.5" />
-                    {roleLoading ? 'loading…' : (role || 'member')}
-                  </Badge>
-                  <Button variant="ghost" size="sm" onClick={() => refetchRole()}>
-                    Refresh
-                  </Button>
-                  {role && (role === 'developer' || role === 'staff' || role === 'moderator') && (
-                    <Link to="/admin">
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <Shield className="h-4 w-4" />
-                        Admin
-                      </Button>
-                    </Link>
+                  {isViewingOther ? (
+                    <>
+                      <Badge variant="secondary" className="gap-2 capitalize">
+                        <Shield className="h-3.5 w-3.5" />
+                        {viewedUserRole}
+                      </Badge>
+                      {isDeveloper && viewedUserRole !== 'developer' && (
+                        <Button 
+                          size="sm" 
+                          onClick={handlePromote}
+                          disabled={updateRole.isPending}
+                        >
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Promote to Staff
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Badge variant="secondary" className="gap-2 capitalize">
+                        <Shield className="h-3.5 w-3.5" />
+                        {roleLoading ? 'loading…' : (myRole || 'member')}
+                      </Badge>
+                      {myRole && (myRole === 'developer' || myRole === 'staff' || myRole === 'moderator') && (
+                        <Link to="/admin">
+                          <Button variant="outline" size="sm" className="gap-2">
+                            <Shield className="h-4 w-4" />
+                            Admin
+                          </Button>
+                        </Link>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
 
-              {/* Profile Form */}
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="fullName" className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    Full Name
-                  </Label>
-                  <Input
-                    id="fullName"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Enter your full name"
-                  />
-                </div>
+              {/* Profile Form - only show for own profile */}
+              {!isViewingOther ? (
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      Full Name
+                    </Label>
+                    <Input
+                      id="fullName"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email Address
-                  </Label>
-                  <Input
-                    value={user.email || ''}
-                    disabled
-                    className="bg-secondary"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Email cannot be changed
-                  </p>
-                </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email Address
+                    </Label>
+                    <Input
+                      value={user.email || ''}
+                      disabled
+                      className="bg-secondary"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Email cannot be changed
+                    </p>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    Account Created
-                  </Label>
-                  <Input
-                    value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    }) : 'Unknown'}
-                    disabled
-                    className="bg-secondary"
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Account Created
+                    </Label>
+                    <Input
+                      value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      }) : 'Unknown'}
+                      disabled
+                      className="bg-secondary"
+                    />
+                  </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="btn-premium"
-                  >
-                    {saving ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="mr-2 h-4 w-4" />
-                        Save Changes
-                      </>
-                    )}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="btn-premium"
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={handleSignOut}
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email Address
+                    </Label>
+                    <Input
+                      value={profile?.email || 'Not available'}
+                      disabled
+                      className="bg-secondary"
+                    />
+                  </div>
+                  <Button variant="outline" onClick={() => navigate(-1)}>
+                    Go Back
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleSignOut}
-                  >
-                    Sign Out
-                  </Button>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

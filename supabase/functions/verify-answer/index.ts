@@ -50,14 +50,14 @@ function compareAnswers(userAnswer: string, correctAnswer: string, answerType: s
   return userClean === correctClean;
 }
 
-// New rating formula: correct = user_rating / 10
+// New rating formula: correct = user_rating / 10, wrong = -30
 function calculateRatingChange(currentRating: number, isCorrect: boolean): number {
   if (isCorrect) {
-    // Correct answer: gain rating/10 points
+    // Correct answer: gain rating/10 points (minimum 10)
     return Math.max(10, Math.round(currentRating / 10));
   } else {
-    // Incorrect answer: lose rating/15 points (slightly less harsh)
-    return -Math.max(5, Math.round(currentRating / 15));
+    // Incorrect answer: lose 30 rating points
+    return -30;
   }
 }
 

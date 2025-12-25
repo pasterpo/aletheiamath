@@ -70,7 +70,8 @@ export default function Duels() {
         title: 'Duel Joined!',
         description: 'The battle begins!',
       });
-      setActiveTab('my');
+      // Redirect to duel arena
+      navigate(`/duel/${duelId}`);
     } catch (error) {
       toast({
         title: 'Failed to join duel',
@@ -78,6 +79,10 @@ export default function Duels() {
         variant: 'destructive',
       });
     }
+  };
+  
+  const handleViewDuel = (duelId: string) => {
+    navigate(`/duel/${duelId}`);
   };
   
   const activeDuels = myDuels.filter(d => d.status === 'active');
@@ -266,7 +271,7 @@ export default function Duels() {
                       </h3>
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {activeDuels.map((duel) => (
-                          <DuelCard key={duel.id} duel={duel} onView={() => {}} />
+                          <DuelCard key={duel.id} duel={duel} onView={() => handleViewDuel(duel.id)} />
                         ))}
                       </div>
                     </div>
@@ -280,7 +285,7 @@ export default function Duels() {
                       </h3>
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {completedDuels.map((duel) => (
-                          <DuelCard key={duel.id} duel={duel} onView={() => {}} />
+                          <DuelCard key={duel.id} duel={duel} onView={() => handleViewDuel(duel.id)} />
                         ))}
                       </div>
                     </div>
