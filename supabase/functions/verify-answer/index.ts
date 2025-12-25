@@ -50,14 +50,15 @@ function compareAnswers(userAnswer: string, correctAnswer: string, answerType: s
   return userClean === correctClean;
 }
 
-// New rating formula: correct = user_rating / 10, wrong = -30
-function calculateRatingChange(currentRating: number, isCorrect: boolean): number {
+// New rating formula based on difficulty 10-100:
+// Correct: +difficulty (e.g., +10 for easiest, +100 for hardest)
+// Incorrect: -(110 - difficulty) (e.g., -100 for easiest wrong, -10 for hardest wrong)
+function calculateRatingChange(difficulty: number, isCorrect: boolean): number {
+  const diff = difficulty || 50; // Default to 50 if not set
   if (isCorrect) {
-    // Correct answer: gain rating/10 points (minimum 10)
-    return Math.max(10, Math.round(currentRating / 10));
+    return diff;
   } else {
-    // Incorrect answer: lose 30 rating points
-    return -30;
+    return -(110 - diff);
   }
 }
 
@@ -100,6 +101,21 @@ serve(async (req) => {
       );
     }
 
+    // Check if user already attempted this problem
+    const { data: existingAttempt } = await supabaseClient
+      .from("user_attempted_problems")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("problem_id", problemId)
+      .maybeSingle();
+
+    if (existingAttempt) {
+      return new Response(
+        JSON.stringify({ error: "You have already attempted this problem" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Fetch problem with answer (server-side only)
     const { data: problem, error: problemError } = await supabaseClient
       .from("problems")
@@ -122,22 +138,31 @@ serve(async (req) => {
     }
 
     // Get current user stats
-    const { data: currentStats, error: statsError } = await supabaseClient
+    const { data: currentStats } = await supabaseClient
       .from("user_stats")
       .select("rating, problems_solved, total_points")
       .eq("user_id", user.id)
-      .single();
+      .maybeSingle();
 
     const currentRating = currentStats?.rating || 1000;
     const isCorrect = compareAnswers(userAnswer, problem.answer, problem.answer_type);
-    const ratingChange = calculateRatingChange(currentRating, isCorrect);
+    const ratingChange = calculateRatingChange(problem.difficulty || 50, isCorrect);
+
+    // Record the attempt
+    await supabaseClient
+      .from("user_attempted_problems")
+      .insert({
+        user_id: user.id,
+        problem_id: problemId,
+        result: isCorrect ? 'correct' : 'incorrect',
+      });
 
     // Update user stats
-    if (!statsError && currentStats) {
-      const newRating = Math.max(0, currentRating + ratingChange);
-      const newSolved = (currentStats.problems_solved || 0) + (isCorrect ? 1 : 0);
-      const newPoints = (currentStats.total_points || 0) + (isCorrect ? Math.abs(ratingChange) : 0);
+    const newRating = Math.max(0, currentRating + ratingChange);
+    const newSolved = (currentStats?.problems_solved || 0) + (isCorrect ? 1 : 0);
+    const newPoints = (currentStats?.total_points || 0) + (isCorrect ? ratingChange : 0);
 
+    if (currentStats) {
       await supabaseClient
         .from("user_stats")
         .update({
@@ -147,9 +172,20 @@ serve(async (req) => {
           last_activity_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
+    } else {
+      // Create new stats record if doesn't exist
+      await supabaseClient
+        .from("user_stats")
+        .insert({
+          user_id: user.id,
+          rating: newRating,
+          problems_solved: isCorrect ? 1 : 0,
+          total_points: isCorrect ? ratingChange : 0,
+          last_activity_at: new Date().toISOString(),
+        });
     }
 
-    console.log(`User ${user.id}: answer=${isCorrect ? 'correct' : 'incorrect'}, rating change=${ratingChange}`);
+    console.log(`User ${user.id}: answer=${isCorrect ? 'correct' : 'incorrect'}, difficulty=${problem.difficulty}, rating change=${ratingChange}, new rating=${newRating}`);
 
     return new Response(
       JSON.stringify({

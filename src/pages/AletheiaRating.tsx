@@ -11,6 +11,7 @@ import { useMyRole } from '@/hooks/useRoles';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { ProblemEditor } from '@/components/admin/ProblemEditor';
+import { useAttemptedProblemIds } from '@/hooks/useAttemptedProblems';
 
 export default function AletheiaRating() {
   const { user } = useAuth();
@@ -23,11 +24,12 @@ export default function AletheiaRating() {
     selectedCategory === 'all' ? undefined : selectedCategory
   );
   const { data: myRating } = useMyRating();
+  const attemptedIds = useAttemptedProblemIds();
 
   const isDeveloper = role === 'developer';
 
-  // Filter problems that have answers
-  const solvableProblems = problems.filter(p => p.answer);
+  // Filter problems that have answers AND haven't been attempted
+  const solvableProblems = problems.filter(p => p.answer && !attemptedIds.has(p.id));
   const currentProblem = solvableProblems[currentProblemIndex];
 
   const handleNext = () => {
@@ -128,10 +130,13 @@ export default function AletheiaRating() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <h3 className="heading-subsection mb-2">All Caught Up!</h3>
                 <p className="text-muted-foreground">
-                  {isDeveloper 
-                    ? 'No problems yet. Click "Add Problem" above to create one!'
-                    : 'No problems available in this category yet'}
+                  {problems.length === 0 
+                    ? (isDeveloper 
+                        ? 'No problems yet. Click "Add Problem" above to create one!'
+                        : 'No problems available in this category yet')
+                    : 'You have attempted all available problems in this category!'}
                 </p>
               </CardContent>
             </Card>
