@@ -33,7 +33,7 @@ export default function Duels() {
     }
     
     try {
-      await createDuel.mutateAsync();
+      await createDuel.mutateAsync(undefined);
       toast({
         title: 'Duel Created!',
         description: 'Waiting for an opponent to join...',
