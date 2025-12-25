@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -129,6 +130,8 @@ export function Header() {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <ThemeToggle />
 
               <Link to="/profile">
                 <Button variant="ghost" size="sm" className="gap-2">

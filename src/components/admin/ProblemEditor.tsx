@@ -21,6 +21,14 @@ interface ProblemEditorProps {
 // Difficulty levels from 10 to 100 in steps of 10
 const DIFFICULTY_LEVELS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
+// Section options for where the problem appears
+const SECTION_OPTIONS = [
+  { value: 'all', label: 'All Sections' },
+  { value: 'duels', label: 'Duels Only' },
+  { value: 'problems', label: 'Problems Only' },
+  { value: 'aletheiarating', label: 'Aletheia Rating Only' },
+];
+
 export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -43,6 +51,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
     image_url: '',
     topic: '',
     subtopic: '',
+    section: 'all',
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -67,6 +76,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         image_url: problemWithImage.image_url || '',
         topic: problemWithImage.topic || '',
         subtopic: problemWithImage.subtopic || '',
+        section: problemWithImage.section || 'all',
       });
       if (problemWithImage.image_url) {
         setImagePreview(problemWithImage.image_url);
@@ -158,6 +168,7 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         image_url: formData.image_url || null,
         topic: formData.topic || null,
         subtopic: formData.subtopic || null,
+        section: formData.section,
       };
 
       if (problemId) {
@@ -399,8 +410,8 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
             />
           </div>
 
-          {/* Topic and Subtopic */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Topic, Subtopic, and Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="topic">Topic</Label>
               <Input
@@ -418,6 +429,27 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
                 onChange={(e) => setFormData({ ...formData, subtopic: e.target.value })}
                 placeholder="e.g., Congruence, Quadratics, Circles"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="section">Section</Label>
+              <Select
+                value={formData.section}
+                onValueChange={(value) => setFormData({ ...formData, section: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTION_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Where this problem will appear
+              </p>
             </div>
           </div>
 

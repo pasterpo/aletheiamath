@@ -119,7 +119,7 @@ serve(async (req) => {
     // Fetch problem with answer (server-side only)
     const { data: problem, error: problemError } = await supabaseClient
       .from("problems")
-      .select("id, answer, answer_type, difficulty")
+      .select("id, answer, answer_type, difficulty, topic, subtopic")
       .eq("id", problemId)
       .single();
 
@@ -157,8 +157,32 @@ serve(async (req) => {
         result: isCorrect ? 'correct' : 'incorrect',
       });
 
-    // Update user stats
+    // Record to user_problem_stats for dashboard
+    await supabaseClient
+      .from("user_problem_stats")
+      .insert({
+        user_id: user.id,
+        problem_id: problemId,
+        is_correct: isCorrect,
+        rating_change: ratingChange,
+        difficulty: problem.difficulty || 50,
+        topic: problem.topic || null,
+        subtopic: problem.subtopic || null,
+        source: 'practice',
+      });
+
+    // Record to rating_history
     const newRating = Math.max(0, currentRating + ratingChange);
+    await supabaseClient
+      .from("rating_history")
+      .insert({
+        user_id: user.id,
+        rating: newRating,
+        rating_change: ratingChange,
+        source: 'practice',
+      });
+
+    // Update user stats
     const newSolved = (currentStats?.problems_solved || 0) + (isCorrect ? 1 : 0);
     const newPoints = (currentStats?.total_points || 0) + (isCorrect ? ratingChange : 0);
 

@@ -113,10 +113,9 @@ export default function IMO2027() {
   ];
   
   const timeline = [
-    { phase: 'Phase 1', title: 'Foundation Building', duration: 'Months 1-6', description: 'Master fundamental techniques in all four areas' },
-    { phase: 'Phase 2', title: 'Advanced Topics', duration: 'Months 7-12', description: 'Tackle olympiad-level problems and learn advanced methods' },
-    { phase: 'Phase 3', title: 'Competition Prep', duration: 'Months 13-18', description: 'Focus on speed, strategy, and mental preparation' },
-    { phase: 'Phase 4', title: 'Final Sprint', duration: 'Months 19-24', description: 'Intensive practice and mock competitions' },
+    { phase: 'Phase 1', title: 'Foundation Building', duration: 'Months 1-3', description: 'Master fundamental techniques in all four areas' },
+    { phase: 'Phase 2', title: 'Advanced Topics', duration: 'Months 4-8', description: 'Tackle olympiad-level problems and learn advanced methods' },
+    { phase: 'Phase 3', title: 'Competition Prep', duration: 'Months 9-12', description: 'Focus on speed, strategy, mental preparation, and mock competitions' },
   ];
   
   return (
@@ -134,7 +133,7 @@ export default function IMO2027() {
               <span className="block text-primary">Preparation Program</span>
             </h1>
             <p className="body-large text-muted-foreground text-balance max-w-2xl mx-auto mb-8">
-              Join our intensive two-year program designed to prepare exceptional students 
+              Join our intensive one-year program designed to prepare exceptional students 
               for the International Mathematical Olympiad. Limited spots available.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4">
@@ -183,7 +182,7 @@ export default function IMO2027() {
       <section className="py-16 md:py-24 bg-secondary/30">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="heading-section text-foreground mb-4">24-Month Journey</h2>
+            <h2 className="heading-section text-foreground mb-4">12-Month Journey</h2>
             <p className="body-large text-muted-foreground max-w-2xl mx-auto">
               A structured path from foundation to IMO readiness
             </p>
