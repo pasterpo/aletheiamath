@@ -21,7 +21,7 @@ interface Profile {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, loading: authLoading, signOut } = useAuth();
-  const { data: role } = useMyRole();
+  const { data: role, isLoading: roleLoading, refetch: refetchRole } = useMyRole();
   const { toast } = useToast();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -146,13 +146,14 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {role && (
-                    <Badge variant="secondary" className="gap-2 capitalize">
-                      <Shield className="h-3.5 w-3.5" />
-                      {role}
-                    </Badge>
-                  )}
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="gap-2 capitalize">
+                    <Shield className="h-3.5 w-3.5" />
+                    {roleLoading ? 'loading…' : (role || 'member')}
+                  </Badge>
+                  <Button variant="ghost" size="sm" onClick={() => refetchRole()}>
+                    Refresh
+                  </Button>
                   {role && (role === 'developer' || role === 'staff' || role === 'moderator') && (
                     <Link to="/admin">
                       <Button variant="outline" size="sm" className="gap-2">

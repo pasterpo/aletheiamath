@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, Shield } from 'lucide-react';
+import { Menu, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { useHasPermission } from '@/hooks/useRoles';
 import { cn } from '@/lib/utils';
 
 const baseNavLinks = [
@@ -21,11 +20,8 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { hasPermission: canAccessAdmin } = useHasPermission('staff');
 
-  const navLinks = canAccessAdmin
-    ? [...baseNavLinks, { href: '/admin', label: 'Admin' }]
-    : baseNavLinks;
+  const navLinks = user ? [...baseNavLinks, { href: '/admin', label: 'Admin' }] : baseNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
 
