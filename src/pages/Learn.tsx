@@ -1,24 +1,46 @@
 import { useState } from 'react';
-import { Search, Filter, Play, BookOpen } from 'lucide-react';
+import { Search, Filter, Play, BookOpen, Plus, Trash2, Video, Loader2 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VideoCard } from '@/components/videos/VideoCard';
 import { VideoPlayer } from '@/components/videos/VideoPlayer';
-import { useVideoCategories, useVideos, useVideoProgress, useUpdateVideoProgress, Video } from '@/hooks/useVideos';
+import { useVideoCategories, useVideos, useVideoProgress, useUpdateVideoProgress, Video as VideoType } from '@/hooks/useVideos';
+import { useAddVideo, useDeleteVideo } from '@/hooks/useVideoManagement';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMyRole } from '@/hooks/useRoles';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Learn() {
   const { user } = useAuth();
+  const { data: role } = useMyRole();
+  const { toast } = useToast();
+  const isDeveloper = role === 'developer';
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeVideo, setActiveVideo] = useState<Video | null>(null);
+  const [activeVideo, setActiveVideo] = useState<VideoType | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // Form state for adding video
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [tags, setTags] = useState('');
   
   const { data: categories = [] } = useVideoCategories();
   const { data: videos = [], isLoading } = useVideos(selectedCategory === 'all' ? undefined : selectedCategory);
   const { data: progress = [] } = useVideoProgress();
   const updateProgress = useUpdateVideoProgress();
+  const addVideo = useAddVideo();
+  const deleteVideo = useDeleteVideo();
   
   const filteredVideos = videos.filter(video => 
     video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -37,6 +59,44 @@ export default function Learn() {
       watchedSeconds: 0,
       completed: true,
     });
+  };
+
+  const handleAddVideo = async () => {
+    if (!youtubeUrl.trim() || !title.trim()) {
+      toast({ title: 'Please fill required fields', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      await addVideo.mutateAsync({
+        youtube_id: youtubeUrl,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        difficulty: difficulty || undefined,
+        category_id: categoryId || undefined,
+        tags: tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : undefined,
+      });
+      toast({ title: 'Video added successfully!' });
+      setDialogOpen(false);
+      setYoutubeUrl('');
+      setTitle('');
+      setDescription('');
+      setDifficulty('');
+      setCategoryId('');
+      setTags('');
+    } catch (error: any) {
+      toast({ title: 'Error adding video', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteVideo.mutateAsync(videoId);
+      toast({ title: 'Video deleted' });
+    } catch (error: any) {
+      toast({ title: 'Error deleting video', description: error.message, variant: 'destructive' });
+    }
   };
   
   const currentIndex = activeVideo ? filteredVideos.findIndex(v => v.id === activeVideo.id) : -1;
@@ -77,10 +137,97 @@ export default function Learn() {
                 className="pl-10"
               />
             </div>
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Filters
-            </Button>
+            {isDeveloper && (
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Plus className="w-4 h-4" />
+                    Add Video
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Add YouTube Video</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 pt-4">
+                    <div className="space-y-2">
+                      <Label>YouTube URL or Video ID *</Label>
+                      <Input
+                        value={youtubeUrl}
+                        onChange={(e) => setYoutubeUrl(e.target.value)}
+                        placeholder="https://youtube.com/watch?v=... or video ID"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Title *</Label>
+                      <Input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Video title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Brief description"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Difficulty</Label>
+                        <Select value={difficulty} onValueChange={setDifficulty}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="beginner">Beginner</SelectItem>
+                            <SelectItem value="intermediate">Intermediate</SelectItem>
+                            <SelectItem value="advanced">Advanced</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Category</Label>
+                        <Select value={categoryId} onValueChange={setCategoryId}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tags (comma separated)</Label>
+                      <Input
+                        value={tags}
+                        onChange={(e) => setTags(e.target.value)}
+                        placeholder="algebra, equations, imo"
+                      />
+                    </div>
+                    <Button 
+                      onClick={handleAddVideo} 
+                      className="w-full"
+                      disabled={addVideo.isPending}
+                    >
+                      {addVideo.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      ) : (
+                        <Video className="h-4 w-4 mr-2" />
+                      )}
+                      Add Video
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </div>
 
           {/* Category Tabs */}
@@ -114,12 +261,23 @@ export default function Learn() {
           ) : filteredVideos.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredVideos.map((video) => (
-                <VideoCard
-                  key={video.id}
-                  video={video}
-                  progress={getVideoProgress(video.id)}
-                  onClick={() => setActiveVideo(video)}
-                />
+                <div key={video.id} className="relative group">
+                  <VideoCard
+                    video={video}
+                    progress={getVideoProgress(video.id)}
+                    onClick={() => setActiveVideo(video)}
+                  />
+                  {isDeveloper && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => handleDeleteVideo(video.id, e)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           ) : (
