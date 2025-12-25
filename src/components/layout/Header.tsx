@@ -7,8 +7,12 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/learn', label: 'Learn' },
+  { href: '/problems', label: 'Problems' },
+  { href: '/duels', label: 'Duels' },
+  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/imo-2027', label: 'IMO 2027' },
   { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
 ];
 
 export function Header() {

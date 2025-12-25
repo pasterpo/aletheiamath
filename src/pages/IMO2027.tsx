@@ -48,10 +48,28 @@ export default function IMO2027() {
   const onSubmit = async (data: WaitlistForm) => {
     setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('imo_waitlist').insert({
-        ...data,
-        user_id: user?.id || null,
-      });
+      const insertData: {
+        full_name: string;
+        email: string;
+        country?: string;
+        current_level?: string;
+        motivation?: string;
+        experience?: string;
+        user_id?: string;
+      } = {
+        full_name: data.full_name,
+        email: data.email,
+        country: data.country || undefined,
+        current_level: data.current_level || undefined,
+        motivation: data.motivation,
+        experience: data.experience || undefined,
+      };
+      
+      if (user?.id) {
+        insertData.user_id = user.id;
+      }
+      
+      const { error } = await supabase.from('imo_waitlist').insert(insertData);
       
       if (error) throw error;
       
