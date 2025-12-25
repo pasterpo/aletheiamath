@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BookOpen, Trophy, Users, Lightbulb, Target, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
-
+import { useAuth } from '@/contexts/AuthContext';
 const features = [
   {
     icon: BookOpen,
@@ -43,6 +43,8 @@ const values = [
 ];
 
 export default function Index() {
+  const { user } = useAuth();
+  
   return (
     <Layout>
       {/* Hero Section */}
@@ -67,12 +69,21 @@ export default function Index() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up delay-200">
-              <Link to="/auth?mode=signup">
-                <Button size="lg" className="btn-premium group w-full sm:w-auto">
-                  Begin Your Journey
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
+              {!user ? (
+                <Link to="/auth?mode=signup">
+                  <Button size="lg" className="btn-premium group w-full sm:w-auto">
+                    Begin Your Journey
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/aletheia-rating">
+                  <Button size="lg" className="btn-premium group w-full sm:w-auto">
+                    Start Solving
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </Link>
+              )}
               <Link to="/about">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   Learn More
@@ -184,16 +195,29 @@ export default function Index() {
             <p className="text-primary-foreground/80 body-large mb-8 max-w-xl mx-auto">
               Join a community of passionate problem-solvers and start your journey toward mathematical excellence.
             </p>
-            <Link to="/auth?mode=signup">
-              <Button 
-                size="lg" 
-                variant="secondary"
-                className="group"
-              >
-                Create Your Account
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+            {!user ? (
+              <Link to="/auth?mode=signup">
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="group"
+                >
+                  Create Your Account
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            ) : (
+              <Link to="/aletheia-rating">
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  className="group"
+                >
+                  Continue Learning
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </section>

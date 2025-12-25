@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Filter, Target, ArrowLeft } from 'lucide-react';
+import { Search, Filter, Target, ArrowLeft, Settings } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,12 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ProblemCard } from '@/components/problems/ProblemCard';
 import { ProblemDetail } from '@/components/problems/ProblemDetail';
 import { useProblemCategories, useProblems, Problem } from '@/hooks/useProblems';
+import { useMyRole } from '@/hooks/useRoles';
+import { ProblemEditor } from '@/components/admin/ProblemEditor';
 
 export default function Problems() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeProblem, setActiveProblem] = useState<Problem | null>(null);
+  const [showProblemEditor, setShowProblemEditor] = useState(false);
+  const { data: myRole } = useMyRole();
   
   const { data: categories = [] } = useProblemCategories();
   const { data: problems = [], isLoading } = useProblems(
@@ -61,13 +65,34 @@ export default function Problems() {
               Olympiad Problem
               <span className="text-primary"> Collection</span>
             </h1>
-            <p className="body-large text-muted-foreground text-balance">
+            <p className="body-large text-muted-foreground text-balance mb-6">
               Challenge yourself with carefully curated problems from mathematical olympiads 
               and competitions worldwide. Hints and solutions included.
             </p>
+            {myRole === 'developer' && (
+              <Button variant="outline" onClick={() => setShowProblemEditor(true)}>
+                <Settings className="w-5 h-5 mr-2" />
+                Add Problem
+              </Button>
+            )}
           </div>
         </div>
       </section>
+
+      {/* Problem Editor Modal for Developers */}
+      {showProblemEditor && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Add Problem</h2>
+                <Button variant="ghost" onClick={() => setShowProblemEditor(false)}>×</Button>
+              </div>
+              <ProblemEditor problemId={null} categories={categories} onClose={() => setShowProblemEditor(false)} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <section className="py-12 md:py-16">
