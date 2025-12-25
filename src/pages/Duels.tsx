@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DuelCard } from '@/components/duels/DuelCard';
 import { useAvailableDuels, useMyDuels, useCreateDuel, useJoinDuel } from '@/hooks/useDuels';
+import { useCancelDuel } from '@/hooks/useCancelDuel';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -25,6 +26,23 @@ export default function Duels() {
   const { data: myDuels = [], isLoading: loadingMy } = useMyDuels();
   const createDuel = useCreateDuel();
   const joinDuel = useJoinDuel();
+  const cancelDuel = useCancelDuel();
+  
+  const handleCancelDuel = async (duelId: string) => {
+    try {
+      await cancelDuel.mutateAsync(duelId);
+      toast({
+        title: 'Duel Cancelled',
+        description: 'The duel has been cancelled successfully.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Failed to cancel duel',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    }
+  };
   
   const handleCreateDuel = async () => {
     if (!user) {
@@ -258,7 +276,12 @@ export default function Duels() {
                       </h3>
                       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {waitingDuels.map((duel) => (
-                          <DuelCard key={duel.id} duel={duel} onView={() => handleViewDuel(duel.id)} />
+                          <DuelCard 
+                            key={duel.id} 
+                            duel={duel} 
+                            onView={() => handleViewDuel(duel.id)}
+                            onCancel={() => handleCancelDuel(duel.id)}
+                          />
                         ))}
                       </div>
                     </div>

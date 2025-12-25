@@ -12,6 +12,7 @@ export interface UserStats {
   videos_watched: number;
   current_streak: number;
   longest_streak: number;
+  rating: number;
   profile?: {
     full_name: string | null;
     avatar_url: string | null;

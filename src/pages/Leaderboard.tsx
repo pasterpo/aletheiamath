@@ -1,28 +1,66 @@
-import { Trophy, Medal, Award, Star, TrendingUp, Zap } from 'lucide-react';
+import { Trophy, Medal, Award, Star, TrendingUp, Zap, Brain, Swords } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LeaderboardTable } from '@/components/leaderboard/LeaderboardTable';
-import { AchievementBadge } from '@/components/achievements/AchievementBadge';
-import { useLeaderboard, useAchievements, useMyAchievements, useMyStats } from '@/hooks/useLeaderboard';
+import { Card, CardContent } from '@/components/ui/card';
+import { useLeaderboard, useMyStats } from '@/hooks/useLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Leaderboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   
-  const { data: leaderboard = [], isLoading: loadingLeaderboard } = useLeaderboard(20);
-  const { data: achievements = [], isLoading: loadingAchievements } = useAchievements();
-  const { data: myAchievements = [] } = useMyAchievements();
+  const { data: leaderboard = [], isLoading: loadingLeaderboard } = useLeaderboard(50);
   const { data: myStats } = useMyStats();
   
-  const getAchievementEarned = (achievementId: string) => {
-    return myAchievements.find(ua => ua.achievement_id === achievementId);
-  };
+  // Sort leaderboards by different criteria
+  const byProblems = [...leaderboard].sort((a, b) => (b.problems_solved || 0) - (a.problems_solved || 0));
+  const byRating = [...leaderboard].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  const byWins = [...leaderboard].sort((a, b) => (b.duels_won || 0) - (a.duels_won || 0));
   
   const userRank = user ? leaderboard.findIndex(s => s.user_id === user.id) + 1 : null;
+  
+  const getRankIcon = (rank: number) => {
+    if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
+    if (rank === 2) return <Medal className="w-5 h-5 text-gray-400" />;
+    if (rank === 3) return <Award className="w-5 h-5 text-amber-600" />;
+    return <span className="w-5 h-5 flex items-center justify-center text-sm font-bold text-muted-foreground">#{rank}</span>;
+  };
+
+  const LeaderboardList = ({ data, valueKey, valueLabel }: { data: typeof leaderboard; valueKey: 'problems_solved' | 'rating' | 'duels_won'; valueLabel: string }) => (
+    <div className="space-y-2">
+      {data.slice(0, 20).map((stat, index) => {
+        const isCurrentUser = user && stat.user_id === user.id;
+        return (
+          <div 
+            key={stat.id} 
+            className={`flex items-center gap-4 p-3 rounded-lg ${isCurrentUser ? 'bg-primary/10 border border-primary/20' : 'bg-secondary/50'}`}
+          >
+            <div className="w-8 flex justify-center">{getRankIcon(index + 1)}</div>
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={stat.profile?.avatar_url || undefined} />
+              <AvatarFallback>{stat.profile?.full_name?.charAt(0) || '?'}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1">
+              <p className="font-medium">
+                {stat.profile?.full_name || 'Anonymous'}
+                {isCurrentUser && <span className="text-primary ml-2">(You)</span>}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="font-bold text-primary">{stat[valueKey] || 0}</p>
+              <p className="text-xs text-muted-foreground">{valueLabel}</p>
+            </div>
+          </div>
+        );
+      })}
+      {data.length === 0 && (
+        <div className="text-center py-8 text-muted-foreground">No data yet</div>
+      )}
+    </div>
+  );
   
   return (
     <Layout>
@@ -36,11 +74,10 @@ export default function Leaderboard() {
             </div>
             <h1 className="heading-display text-foreground mb-6">
               Leaderboard &
-              <span className="text-primary"> Achievements</span>
+              <span className="text-primary"> Rankings</span>
             </h1>
             <p className="body-large text-muted-foreground text-balance">
-              See how you rank against other mathematicians. Earn achievements, 
-              climb the rankings, and prove your mathematical prowess.
+              See how you rank against other mathematicians across different categories.
             </p>
           </div>
         </div>
@@ -73,21 +110,21 @@ export default function Leaderboard() {
                   
                   <div className="flex items-center gap-8">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-primary">{myStats.total_points}</p>
-                      <p className="text-sm text-muted-foreground">Total Points</p>
+                      <p className="text-2xl font-bold text-primary">{myStats.rating || 1000}</p>
+                      <p className="text-sm text-muted-foreground">Rating</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold">{myStats.problems_solved}</p>
+                      <p className="text-2xl font-bold">{myStats.problems_solved || 0}</p>
                       <p className="text-sm text-muted-foreground">Problems</p>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold">{myStats.duels_won}</p>
+                      <p className="text-2xl font-bold">{myStats.duels_won || 0}</p>
                       <p className="text-sm text-muted-foreground">Wins</p>
                     </div>
                     <div className="text-center">
                       <p className="text-2xl font-bold flex items-center gap-1">
                         <Zap className="w-5 h-5 text-orange-500" />
-                        {myStats.current_streak}
+                        {myStats.current_streak || 0}
                       </p>
                       <p className="text-sm text-muted-foreground">Streak</p>
                     </div>
@@ -102,125 +139,88 @@ export default function Leaderboard() {
       {/* Main Content */}
       <section className="py-12 md:py-16">
         <div className="container mx-auto px-4">
-          <Tabs defaultValue="leaderboard">
+          <Tabs defaultValue="rating">
             <TabsList className="mb-8">
-              <TabsTrigger value="leaderboard" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Leaderboard
+              <TabsTrigger value="rating" className="gap-2">
+                <Brain className="w-4 h-4" />
+                Aletheia Rating
               </TabsTrigger>
-              <TabsTrigger value="achievements" className="gap-2">
-                <Star className="w-4 h-4" />
-                Achievements
-                {myAchievements.length > 0 && (
-                  <span className="ml-1 px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
-                    {myAchievements.length}
-                  </span>
-                )}
+              <TabsTrigger value="problems" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Most Problems
+              </TabsTrigger>
+              <TabsTrigger value="wins" className="gap-2">
+                <Swords className="w-4 h-4" />
+                Most Wins
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="leaderboard">
-              <div className="max-w-3xl mx-auto">
-                {loadingLeaderboard ? (
-                  <Card>
-                    <CardContent className="py-12">
-                      <div className="flex justify-center">
+            <TabsContent value="rating">
+              <div className="max-w-2xl mx-auto">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-primary" />
+                      Top by Aletheia Rating
+                    </h3>
+                    {loadingLeaderboard ? (
+                      <div className="flex justify-center py-8">
                         <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                       </div>
-                    </CardContent>
-                  </Card>
-                ) : leaderboard.length > 0 ? (
-                  <LeaderboardTable stats={leaderboard} title="Top Mathematicians" />
-                ) : (
-                  <Card className="text-center py-12">
-                    <CardContent>
-                      <TrendingUp className="w-16 h-16 text-muted-foreground/50 mx-auto mb-4" />
-                      <h3 className="heading-subsection text-muted-foreground mb-2">
-                        No rankings yet
-                      </h3>
-                      <p className="text-muted-foreground mb-6">
-                        Be the first to earn points and appear on the leaderboard!
-                      </p>
-                      <div className="flex gap-4 justify-center">
-                        <Button onClick={() => navigate('/problems')}>
-                          Solve Problems
-                        </Button>
-                        <Button variant="outline" onClick={() => navigate('/duels')}>
-                          Start a Duel
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    ) : (
+                      <LeaderboardList data={byRating} valueKey="rating" valueLabel="rating" />
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
             
-            <TabsContent value="achievements">
-              {loadingAchievements ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                    <div key={i} className="aspect-square bg-secondary animate-pulse rounded-lg" />
-                  ))}
-                </div>
-              ) : (
-                <div>
-                  {/* Progress Summary */}
-                  <Card className="mb-8">
-                    <CardContent className="py-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold mb-1">Achievement Progress</h3>
-                          <p className="text-muted-foreground">
-                            {myAchievements.length} of {achievements.length} unlocked
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-48 h-2 bg-secondary rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-primary rounded-full transition-all"
-                              style={{ 
-                                width: `${(myAchievements.length / achievements.length) * 100}%` 
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium">
-                            {Math.round((myAchievements.length / achievements.length) * 100)}%
-                          </span>
-                        </div>
+            <TabsContent value="problems">
+              <div className="max-w-2xl mx-auto">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5 text-green-500" />
+                      Top Problem Solvers
+                    </h3>
+                    {loadingLeaderboard ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                       </div>
-                    </CardContent>
-                  </Card>
-                  
-                  {/* Achievement Categories */}
-                  {['learning', 'problems', 'duels', 'special'].map((category) => {
-                    const categoryAchievements = achievements.filter(a => a.category === category);
-                    if (categoryAchievements.length === 0) return null;
-                    
-                    return (
-                      <div key={category} className="mb-8">
-                        <h3 className="font-semibold capitalize mb-4 flex items-center gap-2">
-                          {category === 'learning' && <Star className="w-5 h-5 text-blue-500" />}
-                          {category === 'problems' && <Award className="w-5 h-5 text-green-500" />}
-                          {category === 'duels' && <Trophy className="w-5 h-5 text-yellow-500" />}
-                          {category === 'special' && <Zap className="w-5 h-5 text-purple-500" />}
-                          {category} Achievements
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                          {categoryAchievements.map((achievement) => (
-                            <AchievementBadge
-                              key={achievement.id}
-                              achievement={achievement}
-                              earned={getAchievementEarned(achievement.id)}
-                            />
-                          ))}
-                        </div>
+                    ) : (
+                      <LeaderboardList data={byProblems} valueKey="problems_solved" valueLabel="solved" />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="wins">
+              <div className="max-w-2xl mx-auto">
+                <Card>
+                  <CardContent className="pt-6">
+                    <h3 className="font-semibold mb-4 flex items-center gap-2">
+                      <Swords className="w-5 h-5 text-yellow-500" />
+                      Top Duel Winners
+                    </h3>
+                    {loadingLeaderboard ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    ) : (
+                      <LeaderboardList data={byWins} valueKey="duels_won" valueLabel="wins" />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
           </Tabs>
+          
+          {!user && (
+            <div className="text-center mt-8">
+              <Button onClick={() => navigate('/auth')}>Sign In to Track Your Progress</Button>
+            </div>
+          )}
         </div>
       </section>
     </Layout>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Shield, Users, Plus, BookOpen, Settings, Award, Sliders } from 'lucide-react';
+import { Shield, Users, Plus, BookOpen, Settings, Award, Sliders, GraduationCap } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -10,11 +10,15 @@ import { UserManagement } from '@/components/admin/UserManagement';
 import { ProblemManagement } from '@/components/admin/ProblemManagement';
 import { UIPermissionManager } from '@/components/admin/UIPermissionManager';
 import { Badge } from '@/components/ui/badge';
+import { useIMOWaitlist } from '@/hooks/useIMOWaitlist';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
 
 export default function AdminDashboard() {
   const { user, loading: authLoading } = useAuth();
   const { hasPermission, isLoading, role } = useHasPermission('staff');
   const [activeTab, setActiveTab] = useState('overview');
+  const { data: imoWaitlist = [], isLoading: loadingWaitlist } = useIMOWaitlist();
 
   if (authLoading || isLoading) {
     return (
@@ -99,6 +103,17 @@ export default function AdminDashboard() {
                 <TabsTrigger value="ui-permissions" className="gap-2">
                   <Sliders className="w-4 h-4" />
                   UI Control
+                </TabsTrigger>
+              )}
+              {role === 'developer' && (
+                <TabsTrigger value="imo-waitlist" className="gap-2">
+                  <GraduationCap className="w-4 h-4" />
+                  IMO Waitlist
+                  {imoWaitlist.length > 0 && (
+                    <span className="ml-1 px-2 py-0.5 text-xs bg-primary text-primary-foreground rounded-full">
+                      {imoWaitlist.length}
+                    </span>
+                  )}
                 </TabsTrigger>
               )}
               <TabsTrigger value="stats" className="gap-2">
@@ -193,6 +208,57 @@ export default function AdminDashboard() {
             {role === 'developer' && (
               <TabsContent value="ui-permissions">
                 <UIPermissionManager />
+              </TabsContent>
+            )}
+
+            {role === 'developer' && (
+              <TabsContent value="imo-waitlist">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5" />
+                      IMO 2027 Program Applications ({imoWaitlist.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {loadingWaitlist ? (
+                      <div className="flex justify-center py-8">
+                        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : imoWaitlist.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Country</TableHead>
+                              <TableHead>Level</TableHead>
+                              <TableHead>Motivation</TableHead>
+                              <TableHead>Applied At</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {imoWaitlist.map((entry) => (
+                              <TableRow key={entry.id}>
+                                <TableCell className="font-medium">{entry.full_name}</TableCell>
+                                <TableCell>{entry.email}</TableCell>
+                                <TableCell>{entry.country || '-'}</TableCell>
+                                <TableCell>{entry.current_level || '-'}</TableCell>
+                                <TableCell className="max-w-xs truncate">{entry.motivation || '-'}</TableCell>
+                                <TableCell>{format(new Date(entry.created_at), 'MMM d, yyyy')}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No applications yet
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
             )}
 
