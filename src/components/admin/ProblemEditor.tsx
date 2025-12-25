@@ -41,6 +41,8 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
     tags: '',
     is_published: true,
     image_url: '',
+    topic: '',
+    subtopic: '',
   });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -63,6 +65,8 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         tags: existingProblem.tags?.join(', ') || '',
         is_published: true,
         image_url: problemWithImage.image_url || '',
+        topic: problemWithImage.topic || '',
+        subtopic: problemWithImage.subtopic || '',
       });
       if (problemWithImage.image_url) {
         setImagePreview(problemWithImage.image_url);
@@ -152,6 +156,8 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()).filter(Boolean) : null,
         is_published: formData.is_published,
         image_url: formData.image_url || null,
+        topic: formData.topic || null,
+        subtopic: formData.subtopic || null,
       };
 
       if (problemId) {
@@ -391,6 +397,28 @@ export function ProblemEditor({ problemId, categories, onClose }: ProblemEditorP
               onChange={(e) => setFormData({ ...formData, solution: e.target.value })}
               className="min-h-[150px]"
             />
+          </div>
+
+          {/* Topic and Subtopic */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="topic">Topic</Label>
+              <Input
+                id="topic"
+                value={formData.topic}
+                onChange={(e) => setFormData({ ...formData, topic: e.target.value })}
+                placeholder="e.g., Number Theory, Algebra, Geometry"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="subtopic">Subtopic</Label>
+              <Input
+                id="subtopic"
+                value={formData.subtopic}
+                onChange={(e) => setFormData({ ...formData, subtopic: e.target.value })}
+                placeholder="e.g., Congruence, Quadratics, Circles"
+              />
+            </div>
           </div>
 
           {/* Tags */}

@@ -204,9 +204,12 @@ export default function Discussion() {
                         </div>
                         <div className={`flex-1 max-w-[70%] ${isOwnMessage ? 'text-right' : ''}`}>
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-medium">
+                            <Link 
+                              to={`/profile?id=${msg.user_id}`}
+                              className="text-sm font-medium hover:underline"
+                            >
                               {msg.profile?.full_name || msg.profile?.email || 'Anonymous'}
-                            </span>
+                            </Link>
                             <span className="text-xs text-muted-foreground">
                               {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
                             </span>

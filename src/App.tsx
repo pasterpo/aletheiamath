@@ -19,6 +19,7 @@ import AletheiaRating from "./pages/AletheiaRating";
 import Discussion from "./pages/Discussion";
 import UsersList from "./pages/UsersList";
 import DuelArena from "./pages/DuelArena";
+import Friends from "./pages/Friends";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
             <Route path="/aletheia-rating" element={<AletheiaRating />} />
             <Route path="/discussion" element={<Discussion />} />
             <Route path="/users" element={<UsersList />} />
+            <Route path="/friends" element={<Friends />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

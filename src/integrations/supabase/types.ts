@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      direct_messages: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       discussion_messages: {
         Row: {
           created_at: string
@@ -153,6 +180,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      friendships: {
+        Row: {
+          created_at: string
+          friend_id: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          friend_id: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          friend_id?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       imo_waitlist: {
         Row: {
@@ -231,8 +285,10 @@ export type Database = {
           solution: string | null
           source: string | null
           statement: string
+          subtopic: string | null
           tags: string[] | null
           title: string
+          topic: string | null
           updated_at: string
           year: number | null
         }
@@ -249,8 +305,10 @@ export type Database = {
           solution?: string | null
           source?: string | null
           statement: string
+          subtopic?: string | null
           tags?: string[] | null
           title: string
+          topic?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -267,8 +325,10 @@ export type Database = {
           solution?: string | null
           source?: string | null
           statement?: string
+          subtopic?: string | null
           tags?: string[] | null
           title?: string
+          topic?: string | null
           updated_at?: string
           year?: number | null
         }
@@ -308,6 +368,33 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      rating_history: {
+        Row: {
+          created_at: string
+          id: string
+          rating: number
+          rating_change: number
+          source: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rating: number
+          rating_change: number
+          source?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rating?: number
+          rating_change?: number
+          source?: string
           user_id?: string
         }
         Relationships: []
@@ -452,6 +539,56 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "problem_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_problem_stats: {
+        Row: {
+          created_at: string
+          difficulty: number | null
+          id: string
+          is_correct: boolean
+          problem_id: string | null
+          rating_change: number
+          source: string
+          subtopic: string | null
+          time_taken_seconds: number | null
+          topic: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          is_correct: boolean
+          problem_id?: string | null
+          rating_change?: number
+          source?: string
+          subtopic?: string | null
+          time_taken_seconds?: number | null
+          topic?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          difficulty?: number | null
+          id?: string
+          is_correct?: boolean
+          problem_id?: string | null
+          rating_change?: number
+          source?: string
+          subtopic?: string | null
+          time_taken_seconds?: number | null
+          topic?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_problem_stats_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "problems"
             referencedColumns: ["id"]
           },
         ]
