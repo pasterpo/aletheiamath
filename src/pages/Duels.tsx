@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Swords, Plus, Trophy, Clock, Users } from 'lucide-react';
+import { Swords, Plus, Trophy, Clock, Users, Settings } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,13 +9,18 @@ import { useAvailableDuels, useMyDuels, useCreateDuel, useJoinDuel } from '@/hoo
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useMyRole } from '@/hooks/useRoles';
+import { ProblemEditor } from '@/components/admin/ProblemEditor';
+import { useProblemCategories } from '@/hooks/useProblems';
 
 export default function Duels() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('available');
-  
+  const [showProblemEditor, setShowProblemEditor] = useState(false);
+  const { data: myRole } = useMyRole();
+  const { data: categories = [] } = useProblemCategories();
   const { data: availableDuels = [], isLoading: loadingAvailable } = useAvailableDuels();
   const { data: myDuels = [], isLoading: loadingMy } = useMyDuels();
   const createDuel = useCreateDuel();
@@ -103,13 +108,36 @@ export default function Duels() {
               Compete head-to-head in real-time math battles. Solve problems faster than 
               your opponent to climb the leaderboard.
             </p>
-            <Button size="lg" className="btn-premium" onClick={handleCreateDuel}>
-              <Plus className="w-5 h-5 mr-2" />
-              Create New Duel
-            </Button>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button size="lg" className="btn-premium" onClick={handleCreateDuel}>
+                <Plus className="w-5 h-5 mr-2" />
+                Create New Duel
+              </Button>
+              {myRole === 'developer' && (
+                <Button size="lg" variant="outline" onClick={() => setShowProblemEditor(true)}>
+                  <Settings className="w-5 h-5 mr-2" />
+                  Add Problem
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Problem Editor Modal for Developers */}
+      {showProblemEditor && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold">Add Problem for Duels</h2>
+                <Button variant="ghost" onClick={() => setShowProblemEditor(false)}>×</Button>
+              </div>
+              <ProblemEditor problemId={null} categories={categories} onClose={() => setShowProblemEditor(false)} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stats Bar */}
       {user && (
