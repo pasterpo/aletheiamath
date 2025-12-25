@@ -14,6 +14,8 @@ import Problems from "./pages/Problems";
 import IMO2027 from "./pages/IMO2027";
 import Duels from "./pages/Duels";
 import Leaderboard from "./pages/Leaderboard";
+import AdminDashboard from "./pages/AdminDashboard";
+import AletheiaRating from "./pages/AletheiaRating";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +38,8 @@ const App = () => (
             <Route path="/imo-2027" element={<IMO2027 />} />
             <Route path="/duels" element={<Duels />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/aletheia-rating" element={<AletheiaRating />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
