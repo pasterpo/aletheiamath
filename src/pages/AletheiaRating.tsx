@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Trophy, Target } from 'lucide-react';
+import { Trophy, Target, Plus } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,18 +7,24 @@ import { useProblemCategories, useProblems, Problem } from '@/hooks/useProblems'
 import { SolvingInterface } from '@/components/problems/SolvingInterface';
 import { useMyRating } from '@/hooks/useRating';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMyRole } from '@/hooks/useRoles';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { ProblemEditor } from '@/components/admin/ProblemEditor';
 
 export default function AletheiaRating() {
   const { user } = useAuth();
+  const { data: role } = useMyRole();
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
+  const [showEditor, setShowEditor] = useState(false);
   const { data: categories = [] } = useProblemCategories();
   const { data: problems = [], isLoading } = useProblems(
     selectedCategory === 'all' ? undefined : selectedCategory
   );
   const { data: myRating } = useMyRating();
+
+  const isDeveloper = role === 'developer';
 
   // Filter problems that have answers
   const solvableProblems = problems.filter(p => p.answer);
@@ -55,6 +61,23 @@ export default function AletheiaRating() {
     );
   }
 
+  // Show problem editor for developers
+  if (showEditor) {
+    return (
+      <Layout>
+        <section className="py-8">
+          <div className="container mx-auto px-4 max-w-4xl">
+            <ProblemEditor 
+              problemId={null} 
+              categories={categories} 
+              onClose={() => setShowEditor(false)} 
+            />
+          </div>
+        </section>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <section className="relative py-12 md:py-16 gradient-hero pattern-math">
@@ -67,9 +90,17 @@ export default function AletheiaRating() {
             <h1 className="heading-display text-foreground mb-4">
               Competitive <span className="text-primary">Problem Solving</span>
             </h1>
-            <p className="body-large text-muted-foreground">
+            <p className="body-large text-muted-foreground mb-4">
               Your Rating: <span className="font-bold text-foreground">{myRating?.rating || 1000}</span>
             </p>
+            
+            {/* Developer-only Add Problem button */}
+            {isDeveloper && (
+              <Button onClick={() => setShowEditor(true)} className="mt-4">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Problem
+              </Button>
+            )}
           </div>
         </div>
       </section>
@@ -97,7 +128,11 @@ export default function AletheiaRating() {
             <Card>
               <CardContent className="py-12 text-center">
                 <Target className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No problems with answer keys available in this category</p>
+                <p className="text-muted-foreground">
+                  {isDeveloper 
+                    ? 'No problems yet. Click "Add Problem" above to create one!'
+                    : 'No problems available in this category yet'}
+                </p>
               </CardContent>
             </Card>
           ) : currentProblem ? (

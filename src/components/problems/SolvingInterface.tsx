@@ -160,9 +160,28 @@ export function SolvingInterface({ problem, onNext, onClose }: SolvingInterfaceP
     }
 
     try {
+      // Record the skip
       await recordSkip.mutateAsync(problem.category_id);
+      
+      // Apply -30 rating penalty for skipping
+      const { data: currentStats } = await supabase
+        .from('user_stats')
+        .select('rating')
+        .eq('user_id', user.id)
+        .single();
+
+      if (currentStats) {
+        const newRating = Math.max(0, (currentStats.rating || 1000) - 30);
+        await supabase
+          .from('user_stats')
+          .update({ rating: newRating, last_activity_at: new Date().toISOString() })
+          .eq('user_id', user.id);
+        
+        refetchRating();
+      }
+
       toast({
-        title: 'Problem skipped',
+        title: 'Problem skipped (-30 rating)',
         description: `${skipData.remaining - 1} skips remaining for this category today`,
       });
       onNext?.();

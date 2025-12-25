@@ -50,9 +50,15 @@ function compareAnswers(userAnswer: string, correctAnswer: string, answerType: s
   return userClean === correctClean;
 }
 
-function calculateRatingChange(difficulty: number, isCorrect: boolean): number {
-  const baseChange = Math.round(10 + (difficulty * 2));
-  return isCorrect ? baseChange : -Math.round(baseChange * 0.7);
+// New rating formula: correct = user_rating / 10
+function calculateRatingChange(currentRating: number, isCorrect: boolean): number {
+  if (isCorrect) {
+    // Correct answer: gain rating/10 points
+    return Math.max(10, Math.round(currentRating / 10));
+  } else {
+    // Incorrect answer: lose rating/15 points (slightly less harsh)
+    return -Math.max(5, Math.round(currentRating / 15));
+  }
 }
 
 serve(async (req) => {
@@ -115,18 +121,20 @@ serve(async (req) => {
       );
     }
 
-    const isCorrect = compareAnswers(userAnswer, problem.answer, problem.answer_type);
-    const ratingChange = calculateRatingChange(problem.difficulty || 5, isCorrect);
-
-    // Update user stats
+    // Get current user stats
     const { data: currentStats, error: statsError } = await supabaseClient
       .from("user_stats")
       .select("rating, problems_solved, total_points")
       .eq("user_id", user.id)
       .single();
 
+    const currentRating = currentStats?.rating || 1000;
+    const isCorrect = compareAnswers(userAnswer, problem.answer, problem.answer_type);
+    const ratingChange = calculateRatingChange(currentRating, isCorrect);
+
+    // Update user stats
     if (!statsError && currentStats) {
-      const newRating = Math.max(0, (currentStats.rating || 1000) + ratingChange);
+      const newRating = Math.max(0, currentRating + ratingChange);
       const newSolved = (currentStats.problems_solved || 0) + (isCorrect ? 1 : 0);
       const newPoints = (currentStats.total_points || 0) + (isCorrect ? Math.abs(ratingChange) : 0);
 
@@ -140,6 +148,8 @@ serve(async (req) => {
         })
         .eq("user_id", user.id);
     }
+
+    console.log(`User ${user.id}: answer=${isCorrect ? 'correct' : 'incorrect'}, rating change=${ratingChange}`);
 
     return new Response(
       JSON.stringify({
