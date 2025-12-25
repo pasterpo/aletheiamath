@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, Link, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMyRole, useUpdateUserRole, AppRole } from '@/hooks/useRoles';
+import { useFriends, useSendFriendRequest } from '@/hooks/useFriends';
+import { useUserStatsById } from '@/hooks/useUserStatsById';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Mail, Calendar, Loader2, Save, Shield, UserPlus } from 'lucide-react';
+import { 
+  User, Mail, Calendar, Loader2, Save, Shield, UserPlus, 
+  MessageCircle, Swords, Ban, TrendingUp, Target, Award, Flame
+} from 'lucide-react';
+import { StatsDashboard } from '@/components/profile/StatsDashboard';
+import { RatingChart } from '@/components/profile/RatingChart';
+import { ActivityCalendar } from '@/components/profile/ActivityCalendar';
 
 interface Profile {
   id: string;
@@ -31,6 +41,8 @@ export default function Profile() {
   const { data: myRole, isLoading: roleLoading } = useMyRole();
   const updateRole = useUpdateUserRole();
   const { toast } = useToast();
+  const sendFriendRequest = useSendFriendRequest();
+  const { data: friends } = useFriends();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [viewedUserRole, setViewedUserRole] = useState<AppRole>('member');
@@ -41,6 +53,14 @@ export default function Profile() {
   const isViewingOther = viewUserId && viewUserId !== user?.id;
   const isDeveloper = myRole === 'developer';
   const targetUserId = viewUserId || user?.id;
+
+  // Get user stats
+  const { data: userStats } = useUserStatsById(targetUserId || null);
+
+  // Check if already friends
+  const isFriend = friends?.some(f => 
+    f.profile?.user_id === viewUserId
+  );
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -138,6 +158,25 @@ export default function Profile() {
     }
   };
 
+  const handleAddFriend = async () => {
+    if (!viewUserId) return;
+    try {
+      await sendFriendRequest.mutateAsync(viewUserId);
+      toast({ title: 'Friend request sent!' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const handleChallenge = () => {
+    navigate('/duels');
+    toast({ title: 'Create a duel to challenge this user!' });
+  };
+
+  const handleMessage = () => {
+    navigate('/friends');
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -157,171 +196,190 @@ export default function Profile() {
     return null;
   }
 
+  const rating = userStats?.rating || 1000;
+  const problemsSolved = userStats?.problems_solved || 0;
+  const duelsWon = userStats?.duels_won || 0;
+  const duelsPlayed = userStats?.duels_played || 0;
+  const currentStreak = userStats?.current_streak || 0;
+
   return (
     <Layout>
-      <section className="py-16 md:py-24 bg-secondary/30">
-        <div className="container">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h1 className="heading-section text-foreground mb-2">
-                {isViewingOther ? 'User Profile' : 'Your Profile'}
-              </h1>
-              <p className="body-regular text-muted-foreground">
-                {isViewingOther ? 'View user information' : 'Manage your account information'}
-              </p>
-            </div>
-
-            <div className="card-elevated p-6 md:p-8">
-              {/* Profile Avatar */}
-              <div className="flex items-center justify-between gap-4 mb-8 pb-8 border-b border-border">
-                <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-8 w-8 text-primary" />
+      <section className="py-8 md:py-12">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Profile Header - Lichess Style */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            {/* Left: User Info & Actions */}
+            <Card className="lg:col-span-1">
+              <CardContent className="pt-6">
+                {/* Avatar & Name */}
+                <div className="flex flex-col items-center text-center mb-6">
+                  <div className="h-24 w-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <User className="h-12 w-12 text-primary" />
                   </div>
-                  <div>
-                    <h2 className="font-serif text-xl font-semibold text-foreground">
-                      {profile?.full_name || 'AletheiaMath Student'}
-                    </h2>
-                    <p className="text-muted-foreground body-small">
-                      Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                        month: 'long',
-                        year: 'numeric'
-                      }) : 'recently'}
-                    </p>
+                  <h1 className="text-2xl font-serif font-bold text-foreground">
+                    {profile?.full_name || 'AletheiaMath Student'}
+                  </h1>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                      month: 'long',
+                      year: 'numeric'
+                    }) : 'recently'}
+                  </p>
+                  
+                  {/* Role Badge */}
+                  <Badge variant="secondary" className="gap-2 capitalize mt-3">
+                    <Shield className="h-3.5 w-3.5" />
+                    {isViewingOther ? viewedUserRole : (roleLoading ? 'loading…' : (myRole || 'member'))}
+                  </Badge>
+                </div>
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="bg-primary/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-primary">{rating}</p>
+                    <p className="text-xs text-muted-foreground">Rating</p>
+                  </div>
+                  <div className="bg-green-500/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-green-500">{problemsSolved}</p>
+                    <p className="text-xs text-muted-foreground">Solved</p>
+                  </div>
+                  <div className="bg-amber-500/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-amber-500">{duelsWon}/{duelsPlayed}</p>
+                    <p className="text-xs text-muted-foreground">Duels Won</p>
+                  </div>
+                  <div className="bg-red-500/10 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-red-500">{currentStreak}</p>
+                    <p className="text-xs text-muted-foreground">Day Streak</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {isViewingOther ? (
-                    <>
-                      <Badge variant="secondary" className="gap-2 capitalize">
-                        <Shield className="h-3.5 w-3.5" />
-                        {viewedUserRole}
-                      </Badge>
-                      {isDeveloper && viewedUserRole !== 'developer' && (
-                        <Button 
-                          size="sm" 
-                          onClick={handlePromote}
-                          disabled={updateRole.isPending}
-                        >
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Promote to Staff
+                {/* Action Buttons */}
+                {isViewingOther ? (
+                  <div className="space-y-2">
+                    {!isFriend && (
+                      <Button 
+                        className="w-full" 
+                        onClick={handleAddFriend}
+                        disabled={sendFriendRequest.isPending}
+                      >
+                        <UserPlus className="h-4 w-4 mr-2" />
+                        Add Friend
+                      </Button>
+                    )}
+                    <Button variant="outline" className="w-full" onClick={handleMessage}>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={handleChallenge}>
+                      <Swords className="h-4 w-4 mr-2" />
+                      Challenge to Duel
+                    </Button>
+                    {isDeveloper && viewedUserRole !== 'developer' && (
+                      <Button 
+                        variant="secondary" 
+                        className="w-full"
+                        onClick={handlePromote}
+                        disabled={updateRole.isPending}
+                      >
+                        <Shield className="h-4 w-4 mr-2" />
+                        Promote to Staff
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="fullName">Full Name</Label>
+                      <Input
+                        id="fullName"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1"
+                      >
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                        Save
+                      </Button>
+                      <Button variant="outline" onClick={handleSignOut}>
+                        Sign Out
+                      </Button>
+                    </div>
+                    {myRole && (myRole === 'developer' || myRole === 'staff' || myRole === 'moderator') && (
+                      <Link to="/admin" className="block">
+                        <Button variant="secondary" className="w-full">
+                          <Shield className="h-4 w-4 mr-2" />
+                          Admin Dashboard
                         </Button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Badge variant="secondary" className="gap-2 capitalize">
-                        <Shield className="h-3.5 w-3.5" />
-                        {roleLoading ? 'loading…' : (myRole || 'member')}
-                      </Badge>
-                      {myRole && (myRole === 'developer' || myRole === 'staff' || myRole === 'moderator') && (
-                        <Link to="/admin">
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Shield className="h-4 w-4" />
-                            Admin
-                          </Button>
-                        </Link>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
+                      </Link>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Profile Form - only show for own profile */}
-              {!isViewingOther ? (
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName" className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Full Name
-                    </Label>
-                    <Input
-                      id="fullName"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="Enter your full name"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email Address
-                    </Label>
-                    <Input
-                      value={user.email || ''}
-                      disabled
-                      className="bg-secondary"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Email cannot be changed
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Account Created
-                    </Label>
-                    <Input
-                      value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      }) : 'Unknown'}
-                      disabled
-                      className="bg-secondary"
-                    />
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="btn-premium"
-                    >
-                      {saving ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Changes
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={handleSignOut}
-                    >
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email Address
-                    </Label>
-                    <Input
-                      value={profile?.email || 'Not available'}
-                      disabled
-                      className="bg-secondary"
-                    />
-                  </div>
-                  <Button variant="outline" onClick={() => navigate(-1)}>
-                    Go Back
-                  </Button>
-                </div>
-              )}
+            {/* Right: Rating Chart & Activity */}
+            <div className="lg:col-span-2 space-y-6">
+              <RatingChart userId={targetUserId} currentRating={rating} />
+              <ActivityCalendar userId={targetUserId} />
             </div>
           </div>
+
+          {/* Stats Dashboard Tabs */}
+          <Tabs defaultValue="dashboard" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="dashboard">Performance Dashboard</TabsTrigger>
+              <TabsTrigger value="details">Account Details</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dashboard">
+              <StatsDashboard userId={targetUserId} />
+            </TabsContent>
+
+            <TabsContent value="details">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Account Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email Address
+                      </Label>
+                      <Input
+                        value={isViewingOther ? (profile?.email || 'Not available') : (user.email || '')}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Account Created
+                      </Label>
+                      <Input
+                        value={profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        }) : 'Unknown'}
+                        disabled
+                        className="bg-muted"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
     </Layout>

@@ -1,9 +1,16 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, Bell, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const baseNavLinks = [
   { href: '/', label: 'Home' },
@@ -14,17 +21,19 @@ const baseNavLinks = [
   { href: '/discussion', label: 'Discussion' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/imo-2027', label: 'IMO 2027' },
-  { href: '/about', label: 'About' },
 ];
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { data: notifications } = useNotifications();
 
   const navLinks = user ? [...baseNavLinks, { href: '/admin', label: 'Admin' }] : baseNavLinks;
 
   const isActive = (path: string) => location.pathname === path;
+
+  const totalNotifications = notifications?.total || 0;
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -42,7 +51,7 @@ export function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-6">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -59,10 +68,68 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Auth Buttons - Desktop */}
+        {/* Auth Buttons & Notifications - Desktop */}
         <div className="hidden md:flex items-center gap-3">
           {user ? (
             <>
+              {/* Friends Link */}
+              <Link to="/friends">
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                </Button>
+              </Link>
+
+              {/* Notifications Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="relative">
+                    <Bell className="h-4 w-4" />
+                    {totalNotifications > 0 && (
+                      <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
+                        {totalNotifications > 9 ? '9+' : totalNotifications}
+                      </span>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64">
+                  {notifications?.friendRequests ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/friends" className="flex justify-between">
+                        <span>Friend Requests</span>
+                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          {notifications.friendRequests}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {notifications?.unreadMessages ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/friends" className="flex justify-between">
+                        <span>Unread Messages</span>
+                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          {notifications.unreadMessages}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {notifications?.duelChallenges ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/duels" className="flex justify-between">
+                        <span>Duel Challenges</span>
+                        <span className="bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                          {notifications.duelChallenges}
+                        </span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  {totalNotifications === 0 && (
+                    <DropdownMenuItem disabled>
+                      No new notifications
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
               <Link to="/profile">
                 <Button variant="ghost" size="sm" className="gap-2">
                   <User className="h-4 w-4" />
@@ -129,6 +196,19 @@ export function Header() {
             <div className="border-t border-border my-2 pt-2 flex flex-col gap-2">
               {user ? (
                 <>
+                  <Link
+                    to="/friends"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="py-2 px-3 rounded-lg text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center gap-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    Friends
+                    {notifications?.unreadMessages ? (
+                      <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                        {notifications.unreadMessages}
+                      </span>
+                    ) : null}
+                  </Link>
                   <Link
                     to="/profile"
                     onClick={() => setMobileMenuOpen(false)}
