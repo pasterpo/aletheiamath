@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
+  { href: '/aletheia-rating', label: 'Aletheia Rating' },
   { href: '/learn', label: 'Learn' },
   { href: '/problems', label: 'Problems' },
   { href: '/duels', label: 'Duels' },
