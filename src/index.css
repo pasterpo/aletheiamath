@@ -1,96 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* AletheiaMath Premium Editorial Design System */
 
 @layer base {
   :root {
+    /* Primary - Deep Navy */
+    --primary: 218 54% 20%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Background - Pure White */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --foreground: 218 54% 15%;
+    
+    /* Card - Subtle warm white */
+    --card: 40 20% 99%;
+    --card-foreground: 218 54% 15%;
+    
+    /* Popover */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --popover-foreground: 218 54% 15%;
+    
+    /* Secondary - Light slate */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 218 54% 20%;
+    
+    /* Muted - Soft gray */
+    --muted: 220 14% 96%;
+    --muted-foreground: 218 10% 45%;
+    
+    /* Accent - Muted Gold */
+    --accent: 43 74% 49%;
+    --accent-foreground: 218 54% 15%;
+    
+    /* Destructive */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Border - Subtle */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 218 54% 20%;
+    
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
+    
+    /* Sidebar */
+    --sidebar-background: 220 14% 98%;
+    --sidebar-foreground: 218 54% 15%;
+    --sidebar-primary: 218 54% 20%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 218 54% 20%;
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 218 54% 20%;
+    
+    /* Custom AletheiaMath tokens */
+    --navy: 218 54% 20%;
+    --navy-light: 218 40% 30%;
+    --navy-dark: 218 60% 12%;
+    --gold: 43 74% 49%;
+    --gold-light: 43 80% 65%;
+    --gold-muted: 43 30% 70%;
+    --cream: 40 20% 97%;
+    --slate: 220 10% 45%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --primary: 43 74% 65%;
+    --primary-foreground: 218 54% 10%;
+    
+    --background: 218 54% 8%;
+    --foreground: 220 14% 96%;
+    
+    --card: 218 50% 12%;
+    --card-foreground: 220 14% 96%;
+    
+    --popover: 218 50% 12%;
+    --popover-foreground: 220 14% 96%;
+    
+    --secondary: 218 40% 18%;
+    --secondary-foreground: 220 14% 96%;
+    
+    --muted: 218 40% 18%;
+    --muted-foreground: 220 10% 60%;
+    
+    --accent: 43 74% 49%;
+    --accent-foreground: 218 54% 10%;
+    
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 218 40% 20%;
+    --input: 218 40% 20%;
+    --ring: 43 74% 65%;
+    
+    --sidebar-background: 218 54% 10%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 43 74% 65%;
+    --sidebar-primary-foreground: 218 54% 10%;
+    --sidebar-accent: 218 40% 18%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 218 40% 20%;
+    --sidebar-ring: 43 74% 65%;
+    
+    --navy: 218 40% 30%;
+    --navy-light: 218 35% 45%;
+    --navy-dark: 218 54% 8%;
+    --gold: 43 74% 65%;
+    --gold-light: 43 80% 75%;
+    --gold-muted: 43 40% 50%;
+    --cream: 218 30% 15%;
+    --slate: 220 10% 60%;
   }
 }
 
@@ -99,7 +122,195 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    scroll-behavior: smooth;
   }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .heading-display {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-tight;
+  }
+  
+  .heading-section {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight;
+  }
+  
+  .heading-subsection {
+    font-family: 'Playfair Display', Georgia, serif;
+    @apply text-xl md:text-2xl font-medium tracking-tight;
+  }
+  
+  .body-large {
+    @apply text-lg md:text-xl leading-relaxed;
+  }
+  
+  .body-regular {
+    @apply text-base leading-relaxed;
+  }
+  
+  .body-small {
+    @apply text-sm leading-relaxed;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  /* Premium card styles */
+  .card-premium {
+    @apply bg-card border border-border/50 rounded-lg shadow-sm;
+    @apply transition-all duration-300 ease-out;
+    @apply hover:shadow-md hover:border-border;
+  }
+  
+  .card-elevated {
+    @apply bg-card border border-border/30 rounded-xl;
+    box-shadow: 
+      0 4px 6px -1px hsl(var(--navy) / 0.05),
+      0 2px 4px -2px hsl(var(--navy) / 0.05);
+  }
+  
+  /* Button enhancements */
+  .btn-premium {
+    @apply relative overflow-hidden;
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  .btn-premium::after {
+    content: '';
+    @apply absolute inset-0 bg-white/10 opacity-0;
+    @apply transition-opacity duration-300;
+  }
+  
+  .btn-premium:hover::after {
+    @apply opacity-100;
+  }
+  
+  /* Gradient backgrounds */
+  .gradient-hero {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--background)) 0%,
+      hsl(var(--cream)) 50%,
+      hsl(var(--background)) 100%
+    );
+  }
+  
+  .gradient-accent {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--gold)) 0%,
+      hsl(var(--gold-light)) 100%
+    );
+  }
+  
+  /* Decorative elements */
+  .divider-gold {
+    @apply w-16 h-1 rounded-full;
+    background: linear-gradient(90deg, hsl(var(--gold)), hsl(var(--gold-light)));
+  }
+  
+  .divider-navy {
+    @apply w-16 h-0.5 rounded-full bg-primary;
+  }
+  
+  /* Mathematical decorative pattern */
+  .pattern-math {
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231a365d' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  /* Focus styles */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/20 focus:ring-offset-2;
+  }
+  
+  /* Animation utilities */
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.6s ease-out forwards;
+  }
+  
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
+  }
+  
+  .animate-scale-in {
+    animation: scaleIn 0.4s ease-out forwards;
+  }
+}
+
+@layer utilities {
+  /* Stagger delays for animations */
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* KaTeX styling adjustments */
+.katex {
+  font-size: 1.1em;
+}
+
+.katex-display {
+  @apply my-4;
 }
