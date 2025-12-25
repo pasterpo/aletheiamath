@@ -48,6 +48,8 @@ export function useMyRole() {
       return (data?.role as AppRole) || 'member';
     },
     enabled: !!user,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 }
 
