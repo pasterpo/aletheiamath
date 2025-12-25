@@ -11,6 +11,7 @@ const baseNavLinks = [
   { href: '/learn', label: 'Learn' },
   { href: '/problems', label: 'Problems' },
   { href: '/duels', label: 'Duels' },
+  { href: '/discussion', label: 'Discussion' },
   { href: '/leaderboard', label: 'Leaderboard' },
   { href: '/imo-2027', label: 'IMO 2027' },
   { href: '/about', label: 'About' },
