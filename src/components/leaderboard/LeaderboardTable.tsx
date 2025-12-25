@@ -3,6 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserStats } from '@/hooks/useLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 interface LeaderboardTableProps {
   stats: UserStats[];
@@ -38,9 +39,10 @@ export function LeaderboardTable({ stats, title = 'Leaderboard' }: LeaderboardTa
           {stats.map((stat, index) => {
             const isCurrentUser = stat.user_id === user?.id;
             return (
-              <div 
+              <Link 
                 key={stat.id}
-                className={`flex items-center gap-4 p-3 rounded-lg transition-colors ${
+                to={`/profile?id=${stat.user_id}`}
+                className={`flex items-center gap-4 p-3 rounded-lg transition-colors cursor-pointer ${
                   isCurrentUser ? 'bg-primary/5 border border-primary/20' : 'hover:bg-secondary/50'
                 }`}
               >
@@ -54,21 +56,21 @@ export function LeaderboardTable({ stats, title = 'Leaderboard' }: LeaderboardTa
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">
+                  <p className="font-medium truncate hover:underline">
                     {stat.profile?.full_name || 'Anonymous'}
                     {isCurrentUser && <span className="text-primary ml-2">(You)</span>}
                   </p>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>{stat.problems_solved} solved</span>
-                    <span>{stat.duels_won} wins</span>
-                    <span>{stat.videos_watched} videos</span>
+                    <span>{stat.problems_solved || 0} solved</span>
+                    <span>{stat.duels_won || 0} wins</span>
+                    <span>Rating: {stat.rating || 1000}</span>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-lg text-primary">{stat.total_points}</p>
+                  <p className="font-bold text-lg text-primary">{stat.total_points || 0}</p>
                   <p className="text-xs text-muted-foreground">points</p>
                 </div>
-              </div>
+              </Link>
             );
           })}
           
