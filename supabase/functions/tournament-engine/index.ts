@@ -61,8 +61,16 @@ serve(async (req) => {
     }
 
     if (action === "process_game_result") {
-      const { game_id } = await req.json();
-      const result = await processGameResult(supabaseClient, game_id);
+      const { game_id, tournament_ended } = await req.json();
+      const result = await processGameResult(supabaseClient, game_id, tournament_ended);
+      return new Response(JSON.stringify(result), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "tick") {
+      // Periodic tick - check tournaments that need actions
+      const result = await handleTick(supabaseClient);
       return new Response(JSON.stringify(result), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -412,6 +420,50 @@ async function startTournament(supabase: any, tournamentId: string) {
   return { success: true };
 }
 
+async function handleTick(supabase: any) {
+  console.log("Handling tournament tick");
+  const now = new Date();
+
+  // Find tournaments that should start
+  const { data: tournamentsToStart } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("status", "scheduled")
+    .lte("start_time", now.toISOString());
+
+  for (const tournament of tournamentsToStart || []) {
+    console.log("Auto-starting tournament:", tournament.id);
+    await startTournament(supabase, tournament.id);
+  }
+
+  // Find tournaments that should end
+  const { data: activeTournaments } = await supabase
+    .from("tournaments")
+    .select("*")
+    .eq("status", "active");
+
+  for (const tournament of activeTournaments || []) {
+    const startTime = new Date(tournament.start_time);
+    const endTime = new Date(startTime.getTime() + tournament.duration_minutes * 60 * 1000);
+    
+    if (now >= endTime) {
+      console.log("Auto-ending tournament:", tournament.id);
+      await endTournament(supabase, tournament.id);
+    } else {
+      // Tournament is active - run arena pairing if it's an arena tournament
+      if (tournament.tournament_type === "arena") {
+        await pairArenaPlayers(supabase, tournament.id);
+      }
+    }
+  }
+
+  return { 
+    success: true, 
+    started: tournamentsToStart?.length || 0,
+    checked: activeTournaments?.length || 0
+  };
+}
+
 async function endTournament(supabase: any, tournamentId: string) {
   console.log("Ending tournament:", tournamentId);
 
@@ -424,8 +476,8 @@ async function endTournament(supabase: any, tournamentId: string) {
   return { success: true };
 }
 
-async function processGameResult(supabase: any, gameId: string) {
-  console.log("Processing game result:", gameId);
+async function processGameResult(supabase: any, gameId: string, tournamentEnded: boolean = false) {
+  console.log("Processing game result:", gameId, "Tournament ended:", tournamentEnded);
 
   const { data: game, error: gameError } = await supabase
     .from("tournament_games")
@@ -434,6 +486,13 @@ async function processGameResult(supabase: any, gameId: string) {
     .single();
 
   if (gameError) throw gameError;
+
+  // If tournament has ended (buzzer), don't update leaderboard scores
+  // but still update player stats for their profile
+  if (tournamentEnded) {
+    console.log("Game finished after tournament ended - not counting for leaderboard");
+    return { success: true, countedForLeaderboard: false };
+  }
 
   // Update participant scores
   if (game.points_awarded_a > 0) {
