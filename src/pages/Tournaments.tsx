@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
+import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Trophy, Users, Clock, Swords, Plus, Calendar, Zap } from 'lucide-react';
 import { useTournaments, Tournament, TournamentStatus } from '@/hooks/useTournaments';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRoles } from '@/hooks/useRoles';
+import { useMyRole } from '@/hooks/useRoles';
 import { CreateTournamentDialog } from '@/components/tournaments/CreateTournamentDialog';
 import { format, formatDistanceToNow, isPast, isFuture } from 'date-fns';
 
@@ -26,8 +26,8 @@ const typeColors: Record<string, string> = {
 export default function Tournaments() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: roles } = useUserRoles();
-  const hasRole = (role: string) => roles?.some(r => r.role === role) || false;
+  const { data: myRole } = useMyRole();
+  const hasRole = (role: string) => myRole === role;
   const [activeTab, setActiveTab] = useState<'upcoming' | 'active' | 'finished'>('upcoming');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
