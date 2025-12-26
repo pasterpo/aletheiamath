@@ -517,6 +517,226 @@ export type Database = {
           },
         ]
       }
+      tournament_games: {
+        Row: {
+          created_at: string
+          finished_at: string | null
+          id: string
+          is_bye: boolean
+          is_draw: boolean
+          player_a_answer: string | null
+          player_a_berserk: boolean
+          player_a_id: string
+          player_a_mistakes: number
+          player_a_time_ms: number | null
+          player_b_answer: string | null
+          player_b_berserk: boolean
+          player_b_id: string | null
+          player_b_mistakes: number
+          player_b_time_ms: number | null
+          points_awarded_a: number | null
+          points_awarded_b: number | null
+          problem_id: string | null
+          round_number: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["game_status"]
+          tournament_id: string
+          winner_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          is_bye?: boolean
+          is_draw?: boolean
+          player_a_answer?: string | null
+          player_a_berserk?: boolean
+          player_a_id: string
+          player_a_mistakes?: number
+          player_a_time_ms?: number | null
+          player_b_answer?: string | null
+          player_b_berserk?: boolean
+          player_b_id?: string | null
+          player_b_mistakes?: number
+          player_b_time_ms?: number | null
+          points_awarded_a?: number | null
+          points_awarded_b?: number | null
+          problem_id?: string | null
+          round_number?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          tournament_id: string
+          winner_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          finished_at?: string | null
+          id?: string
+          is_bye?: boolean
+          is_draw?: boolean
+          player_a_answer?: string | null
+          player_a_berserk?: boolean
+          player_a_id?: string
+          player_a_mistakes?: number
+          player_a_time_ms?: number | null
+          player_b_answer?: string | null
+          player_b_berserk?: boolean
+          player_b_id?: string | null
+          player_b_mistakes?: number
+          player_b_time_ms?: number | null
+          points_awarded_a?: number | null
+          points_awarded_b?: number | null
+          problem_id?: string | null
+          round_number?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["game_status"]
+          tournament_id?: string
+          winner_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_games_problem_id_fkey"
+            columns: ["problem_id"]
+            isOneToOne: false
+            referencedRelation: "problems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_games_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournament_participants: {
+        Row: {
+          draws: number
+          id: string
+          is_berserk_next: boolean
+          is_on_fire: boolean
+          joined_at: string
+          last_opponent_id: string | null
+          lobby_since: string | null
+          losses: number
+          score: number
+          status: Database["public"]["Enums"]["participant_status"]
+          streak: number
+          tournament_id: string
+          user_id: string
+          wins: number
+        }
+        Insert: {
+          draws?: number
+          id?: string
+          is_berserk_next?: boolean
+          is_on_fire?: boolean
+          joined_at?: string
+          last_opponent_id?: string | null
+          lobby_since?: string | null
+          losses?: number
+          score?: number
+          status?: Database["public"]["Enums"]["participant_status"]
+          streak?: number
+          tournament_id: string
+          user_id: string
+          wins?: number
+        }
+        Update: {
+          draws?: number
+          id?: string
+          is_berserk_next?: boolean
+          is_on_fire?: boolean
+          joined_at?: string
+          last_opponent_id?: string | null
+          lobby_since?: string | null
+          losses?: number
+          score?: number
+          status?: Database["public"]["Enums"]["participant_status"]
+          streak?: number
+          tournament_id?: string
+          user_id?: string
+          wins?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_participants_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tournaments: {
+        Row: {
+          category_id: string | null
+          created_at: string
+          created_by: string
+          current_round: number | null
+          description: string | null
+          duration_minutes: number
+          id: string
+          max_rating: number | null
+          min_rated_games: number | null
+          min_rating: number | null
+          name: string
+          start_time: string
+          status: Database["public"]["Enums"]["tournament_status"]
+          time_per_problem_seconds: number
+          total_rounds: number | null
+          tournament_type: Database["public"]["Enums"]["tournament_type"]
+          updated_at: string
+        }
+        Insert: {
+          category_id?: string | null
+          created_at?: string
+          created_by: string
+          current_round?: number | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          max_rating?: number | null
+          min_rated_games?: number | null
+          min_rating?: number | null
+          name: string
+          start_time: string
+          status?: Database["public"]["Enums"]["tournament_status"]
+          time_per_problem_seconds?: number
+          total_rounds?: number | null
+          tournament_type?: Database["public"]["Enums"]["tournament_type"]
+          updated_at?: string
+        }
+        Update: {
+          category_id?: string | null
+          created_at?: string
+          created_by?: string
+          current_round?: number | null
+          description?: string | null
+          duration_minutes?: number
+          id?: string
+          max_rating?: number | null
+          min_rated_games?: number | null
+          min_rating?: number | null
+          name?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["tournament_status"]
+          time_per_problem_seconds?: number
+          total_rounds?: number | null
+          tournament_type?: Database["public"]["Enums"]["tournament_type"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournaments_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "problem_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ui_permissions: {
         Row: {
           created_at: string
@@ -959,6 +1179,15 @@ export type Database = {
     }
     Enums: {
       app_role: "developer" | "staff" | "moderator" | "member"
+      game_status: "countdown" | "active" | "finished"
+      participant_status:
+        | "registered"
+        | "in_lobby"
+        | "in_game"
+        | "paused"
+        | "withdrawn"
+      tournament_status: "scheduled" | "active" | "finished"
+      tournament_type: "arena" | "swiss"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1087,6 +1316,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["developer", "staff", "moderator", "member"],
+      game_status: ["countdown", "active", "finished"],
+      participant_status: [
+        "registered",
+        "in_lobby",
+        "in_game",
+        "paused",
+        "withdrawn",
+      ],
+      tournament_status: ["scheduled", "active", "finished"],
+      tournament_type: ["arena", "swiss"],
     },
   },
 } as const

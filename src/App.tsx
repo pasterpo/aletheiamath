@@ -20,6 +20,8 @@ import Discussion from "./pages/Discussion";
 import UsersList from "./pages/UsersList";
 import DuelArena from "./pages/DuelArena";
 import Friends from "./pages/Friends";
+import Tournaments from "./pages/Tournaments";
+import TournamentLobby from "./pages/TournamentLobby";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +50,8 @@ const App = () => (
             <Route path="/discussion" element={<Discussion />} />
             <Route path="/users" element={<UsersList />} />
             <Route path="/friends" element={<Friends />} />
+            <Route path="/tournaments" element={<Tournaments />} />
+            <Route path="/tournaments/:id" element={<TournamentLobby />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
