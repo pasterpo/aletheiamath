@@ -39,9 +39,12 @@ export function TournamentGame({ game, tournament, onGameEnd }: TournamentGamePr
   const [lockCountdown, setLockCountdown] = useState(0);
   const [showGiveUpConfirm, setShowGiveUpConfirm] = useState(false);
   const [renderedProblem, setRenderedProblem] = useState('');
+  const [hasInteracted, setHasInteracted] = useState(false);
+  const [afkWarning, setAfkWarning] = useState(false);
   
   const startTimeRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const afkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const activateBerserk = useActivateBerserk();
   const submitAnswer = useSubmitTournamentAnswer();
@@ -92,6 +95,47 @@ export function TournamentGame({ game, tournament, onGameEnd }: TournamentGamePr
     return () => clearInterval(interval);
   }, [isCountdown]);
 
+  // AFK Detection - Auto-resign after 15 seconds of no interaction
+  useEffect(() => {
+    if (isCountdown || game.status === 'finished' || hasInteracted) return;
+
+    // Start AFK timer when game becomes active
+    afkTimeoutRef.current = setTimeout(() => {
+      if (!hasInteracted) {
+        setAfkWarning(true);
+        toast({ 
+          title: 'AFK Warning!', 
+          description: 'You will be auto-resigned in 5 seconds...',
+          variant: 'destructive'
+        });
+        
+        // Give 5 more seconds then auto-resign
+        setTimeout(() => {
+          if (!hasInteracted) {
+            handleAfkResign();
+          }
+        }, 5000);
+      }
+    }, 15000); // 15 seconds
+
+    return () => {
+      if (afkTimeoutRef.current) {
+        clearTimeout(afkTimeoutRef.current);
+      }
+    };
+  }, [isCountdown, game.status, hasInteracted]);
+
+  // Track user interaction
+  const handleInteraction = useCallback(() => {
+    if (!hasInteracted) {
+      setHasInteracted(true);
+      setAfkWarning(false);
+      if (afkTimeoutRef.current) {
+        clearTimeout(afkTimeoutRef.current);
+      }
+    }
+  }, [hasInteracted]);
+
   // Game timer
   useEffect(() => {
     if (isCountdown || game.status === 'finished') return;
@@ -128,6 +172,20 @@ export function TournamentGame({ game, tournament, onGameEnd }: TournamentGamePr
 
     return () => clearInterval(interval);
   }, [isLocked, lockCountdown]);
+
+  const handleAfkResign = async () => {
+    try {
+      await giveUp.mutateAsync(game.id);
+      toast({ 
+        title: 'AFK Auto-Resign', 
+        description: 'You were withdrawn due to inactivity.',
+        variant: 'destructive'
+      });
+      onGameEnd();
+    } catch (error) {
+      console.error('AFK resign error:', error);
+    }
+  };
 
   const handleBerserk = async () => {
     try {
@@ -312,7 +370,11 @@ export function TournamentGame({ game, tournament, onGameEnd }: TournamentGamePr
                 <Input
                   ref={inputRef}
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  onChange={(e) => {
+                    setAnswer(e.target.value);
+                    handleInteraction();
+                  }}
+                  onKeyDown={handleInteraction}
                   placeholder="Enter your answer..."
                   className="flex-1 text-lg"
                   autoFocus
