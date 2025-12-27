@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { QuickPlayGrid } from '@/components/home/QuickPlayGrid';
@@ -9,6 +10,7 @@ import { PlayerStats } from '@/components/home/PlayerStats';
 import { ActionButtons } from '@/components/home/ActionButtons';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Index() {
   const { user } = useAuth();
@@ -118,9 +120,6 @@ export default function Index() {
 
 // Mini leaderboard preview component
 function TopPlayersPreview() {
-  const { useQuery } = require('@tanstack/react-query');
-  const { supabase } = require('@/integrations/supabase/client');
-
   const { data: topPlayers } = useQuery({
     queryKey: ['top-players-preview'],
     queryFn: async () => {
