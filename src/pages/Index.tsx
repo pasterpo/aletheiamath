@@ -1,226 +1,171 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BookOpen, Trophy, Users, Lightbulb, Target, Brain } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import Layout from '@/components/layout/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-const features = [
-  {
-    icon: BookOpen,
-    title: 'IMO 2027 Crash Course',
-    description: 'A comprehensive curriculum designed to take you from foundations to olympiad-level mastery.',
-    status: 'Coming Soon',
-  },
-  {
-    icon: Trophy,
-    title: 'Snap-Solve Duels',
-    description: 'Real-time 1v1 mathematical battles to sharpen your speed and accuracy.',
-    status: 'Coming Soon',
-  },
-  {
-    icon: Users,
-    title: 'Global Community',
-    description: 'Connect with passionate mathematicians from around the world.',
-    status: 'Coming Soon',
-  },
-];
-
-const values = [
-  {
-    icon: Lightbulb,
-    title: 'Curiosity',
-    description: 'We nurture the innate desire to ask "why" and explore the depths of mathematical truth.',
-  },
-  {
-    icon: Target,
-    title: 'Rigor',
-    description: 'Every proof is complete, every argument is sound. We embrace the beauty of precision.',
-  },
-  {
-    icon: Brain,
-    title: 'Intuition',
-    description: 'Beyond memorization — we build deep understanding that reveals the elegance of mathematics.',
-  },
-];
+import { QuickPlayGrid } from '@/components/home/QuickPlayGrid';
+import { LiveMathTV } from '@/components/home/LiveMathTV';
+import { PuzzleOfTheDay } from '@/components/home/PuzzleOfTheDay';
+import { TournamentSidebar } from '@/components/home/TournamentSidebar';
+import { PlayerStats } from '@/components/home/PlayerStats';
+import { ActionButtons } from '@/components/home/ActionButtons';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 
 export default function Index() {
   const { user } = useAuth();
-  
+
   return (
     <Layout>
-      {/* Hero Section */}
-      <section className="relative gradient-hero pattern-math overflow-hidden">
-        <div className="container py-20 md:py-32 lg:py-40">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="animate-fade-in">
-              <span className="inline-block px-4 py-1.5 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6">
-                The Aletheia Global Math Ecosystem
-              </span>
-            </div>
-            
-            <h1 className="heading-display text-foreground mb-6 animate-slide-up">
-              Where High-Level Mathematics Becomes{' '}
-              <span className="text-primary">Understandable</span> and{' '}
-              <span className="text-accent">Enjoyable</span>
-            </h1>
-            
-            <p className="body-large text-muted-foreground mb-8 max-w-2xl mx-auto animate-slide-up delay-100">
-              Aletheia is a platform for high-school students aspiring to the International Mathematical Olympiad. 
-              We build intuition, not memorization — rigor, not shortcuts.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up delay-200">
-              {!user ? (
-                <Link to="/auth?mode=signup">
-                  <Button size="lg" className="btn-premium group w-full sm:w-auto">
-                    Begin Your Journey
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              ) : (
-                <Link to="/aletheia-rating">
-                  <Button size="lg" className="btn-premium group w-full sm:w-auto">
-                    Start Solving
-                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              )}
-              <Link to="/about">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                  Learn More
-                </Button>
-              </Link>
-            </div>
+      <div className="min-h-[calc(100vh-4rem)] bg-background">
+        {/* Top bar with player stats */}
+        <div className="border-b border-border bg-secondary/30">
+          <div className="container py-2 flex items-center justify-between">
+            <PlayerStats />
+            <Link 
+              to="/about" 
+              className="text-sm text-muted-foreground hover:text-primary flex items-center gap-1"
+            >
+              About Aletheia
+              <ExternalLink className="h-3 w-3" />
+            </Link>
           </div>
         </div>
-        
-        {/* Decorative element */}
-        <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background to-transparent" />
-      </section>
 
-      {/* Philosophy Teaser */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="divider-gold mx-auto mb-8" />
-            <blockquote className="font-serif text-2xl md:text-3xl text-foreground italic leading-relaxed">
-              "The essence of mathematics lies not in making simple things complicated, 
-              but in making complicated things simple."
-            </blockquote>
-            <p className="mt-6 text-muted-foreground body-regular">
-              — Our guiding principle at AletheiaMath
-            </p>
-          </div>
-        </div>
-      </section>
+        <div className="container py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left Column - Tournaments */}
+            <div className="lg:col-span-3 order-2 lg:order-1">
+              <div className="sticky top-20">
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">
+                  Tournaments
+                </h3>
+                <TournamentSidebar />
+              </div>
+            </div>
 
-      {/* Features Preview */}
-      <section className="py-16 md:py-24 bg-secondary/30">
-        <div className="container">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="heading-section text-foreground mb-4">
-              What's Coming
-            </h2>
-            <p className="body-large text-muted-foreground max-w-2xl mx-auto">
-              We're building the most comprehensive platform for aspiring mathematical olympians.
-            </p>
-          </div>
+            {/* Center Column - Quick Play Grid */}
+            <div className="lg:col-span-6 order-1 lg:order-2 space-y-6">
+              {/* Tagline */}
+              <div className="text-center mb-4">
+                <p className="text-muted-foreground text-sm">
+                  Aletheia is a free, no-ads, open math platform.{' '}
+                  <Link to="/about" className="text-primary hover:underline">
+                    About Aletheia...
+                  </Link>
+                </p>
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-            {features.map((feature, index) => (
-              <div 
-                key={feature.title}
-                className="card-premium p-6 md:p-8 animate-scale-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="h-6 w-6 text-primary" />
+              {/* Quick Play Grid */}
+              <QuickPlayGrid />
+
+              {/* Action Buttons */}
+              <ActionButtons />
+
+              {/* Sign up CTA for logged out users */}
+              {!user && (
+                <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-xl p-6 text-center border border-primary/20">
+                  <h2 className="text-xl font-serif font-semibold text-foreground mb-2">
+                    Join the Math Arena
+                  </h2>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Create an account to compete in duels, join tournaments, and track your rating.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Link to="/auth?mode=signup">
+                      <Button className="btn-premium">
+                        Sign Up - It's Free
+                      </Button>
+                    </Link>
+                    <Link to="/auth">
+                      <Button variant="outline">
+                        Sign In
+                      </Button>
+                    </Link>
                   </div>
-                  <span className="px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-medium">
-                    {feature.status}
-                  </span>
                 </div>
-                <h3 className="heading-subsection text-foreground mb-2">
-                  {feature.title}
-                </h3>
-                <p className="body-regular text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+              )}
+            </div>
 
-      {/* Core Values */}
-      <section className="py-16 md:py-24 bg-background">
-        <div className="container">
-          <div className="text-center mb-12 md:mb-16">
-            <h2 className="heading-section text-foreground mb-4">
-              Our Philosophy
-            </h2>
-            <p className="body-large text-muted-foreground max-w-2xl mx-auto">
-              Three pillars that guide everything we create.
-            </p>
-          </div>
+            {/* Right Column - Live TV & Puzzle */}
+            <div className="lg:col-span-3 order-3 space-y-6">
+              <div className="sticky top-20 space-y-6">
+                {/* Live Math TV */}
+                <LiveMathTV />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            {values.map((value, index) => (
-              <div 
-                key={value.title} 
-                className="text-center"
-              >
-                <div className="h-16 w-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-6">
-                  <value.icon className="h-8 w-8 text-accent" />
+                {/* Puzzle of the Day */}
+                <PuzzleOfTheDay />
+
+                {/* Leaderboard teaser */}
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <h3 className="text-sm font-medium text-foreground mb-3">
+                    Top Players
+                  </h3>
+                  <TopPlayersPreview />
+                  <Link 
+                    to="/leaderboard" 
+                    className="block text-center text-sm text-primary hover:underline mt-3"
+                  >
+                    View leaderboard →
+                  </Link>
                 </div>
-                <h3 className="heading-subsection text-foreground mb-3">
-                  {value.title}
-                </h3>
-                <p className="body-regular text-muted-foreground">
-                  {value.description}
-                </p>
               </div>
-            ))}
+            </div>
           </div>
         </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-primary text-primary-foreground">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-serif text-3xl md:text-4xl font-semibold mb-4">
-              Ready to Begin?
-            </h2>
-            <p className="text-primary-foreground/80 body-large mb-8 max-w-xl mx-auto">
-              Join a community of passionate problem-solvers and start your journey toward mathematical excellence.
-            </p>
-            {!user ? (
-              <Link to="/auth?mode=signup">
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  className="group"
-                >
-                  Create Your Account
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            ) : (
-              <Link to="/aletheia-rating">
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  className="group"
-                >
-                  Continue Learning
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-      </section>
+      </div>
     </Layout>
+  );
+}
+
+// Mini leaderboard preview component
+function TopPlayersPreview() {
+  const { useQuery } = require('@tanstack/react-query');
+  const { supabase } = require('@/integrations/supabase/client');
+
+  const { data: topPlayers } = useQuery({
+    queryKey: ['top-players-preview'],
+    queryFn: async () => {
+      const { data: stats } = await supabase
+        .from('user_stats')
+        .select('user_id, rating, total_points')
+        .order('rating', { ascending: false })
+        .limit(5);
+
+      if (!stats?.length) return [];
+
+      const userIds = stats.map((s: any) => s.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+
+      return stats.map((s: any, index: number) => ({
+        ...s,
+        rank: index + 1,
+        name: profiles?.find((p: any) => p.user_id === s.user_id)?.full_name || 'Anonymous'
+      }));
+    },
+  });
+
+  return (
+    <div className="space-y-2">
+      {topPlayers?.map((player: any) => (
+        <div key={player.user_id} className="flex items-center gap-3">
+          <span className="text-xs font-medium text-muted-foreground w-4">
+            {player.rank}
+          </span>
+          <span className="text-sm text-foreground flex-1 truncate">
+            {player.name}
+          </span>
+          <span className="text-sm font-medium text-primary">
+            {player.rating}
+          </span>
+        </div>
+      ))}
+      {(!topPlayers || topPlayers.length === 0) && (
+        <p className="text-sm text-muted-foreground text-center py-2">
+          No players yet
+        </p>
+      )}
+    </div>
   );
 }
