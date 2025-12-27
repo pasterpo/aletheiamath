@@ -9,6 +9,7 @@ import { useSubmitSolution } from '@/hooks/useProblems';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import katex from 'katex';
+import { AIGradingInterface } from './AIGradingInterface';
 
 interface ProblemDetailProps {
   problem: Problem;
@@ -200,10 +201,18 @@ export function ProblemDetail({ problem, onClose }: ProblemDetailProps) {
         </Card>
       )}
       
-      {/* Submit Solution */}
+      {/* AI Grading Interface */}
+      {problem.solution && (
+        <AIGradingInterface problem={problem} />
+      )}
+      
+      {/* Submit Solution (legacy) */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Your Solution</CardTitle>
+          <CardTitle className="text-lg">Write Your Solution</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Record your solution for personal reference
+          </p>
         </CardHeader>
         <CardContent className="space-y-4">
           <Textarea
@@ -213,9 +222,9 @@ export function ProblemDetail({ problem, onClose }: ProblemDetailProps) {
             className="min-h-[150px]"
           />
           <div className="flex justify-end">
-            <Button onClick={handleSubmit} disabled={submitting}>
+            <Button onClick={handleSubmit} disabled={submitting} variant="outline">
               <Send className="w-4 h-4 mr-2" />
-              {submitting ? 'Submitting...' : 'Submit Solution'}
+              {submitting ? 'Submitting...' : 'Save Solution'}
             </Button>
           </div>
         </CardContent>
