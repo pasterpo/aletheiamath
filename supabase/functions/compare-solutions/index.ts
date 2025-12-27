@@ -12,43 +12,106 @@ serve(async (req) => {
   }
 
   try {
-    // Authentication check
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Get auth user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      console.error("Missing Authorization header");
       return new Response(
-        JSON.stringify({ error: "Missing Authorization header" }),
+        JSON.stringify({ error: "No authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: `Bearer ${token}` } } }
-    );
-
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
     if (authError || !user) {
-      console.error("Auth error:", authError);
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Authenticated user:", user.id);
+    const { problemId, userSolutionText, userSolutionImageUrl } = await req.json();
 
-    const { userSolution, correctSolution } = await req.json();
-
-    if (!userSolution || !correctSolution) {
+    if (!problemId) {
       return new Response(
-        JSON.stringify({ error: "Missing userSolution or correctSolution" }),
+        JSON.stringify({ error: "Missing problemId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    if (!userSolutionText && !userSolutionImageUrl) {
+      return new Response(
+        JSON.stringify({ error: "Please provide either solution text or image" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch problem with solution
+    const { data: problem, error: problemError } = await supabaseClient
+      .from("problems")
+      .select("id, title, statement, solution, answer")
+      .eq("id", problemId)
+      .single();
+
+    if (problemError || !problem) {
+      return new Response(
+        JSON.stringify({ error: "Problem not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!problem.solution) {
+      return new Response(
+        JSON.stringify({ error: "This problem has no official solution to compare against" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Prepare the prompt for AI comparison
+    const systemPrompt = `You are a mathematical grading assistant. Your job is to compare a student's solution against the official solution for a math problem.
+
+Analyze the student's solution and determine:
+1. Is the mathematical reasoning correct?
+2. Are there any logical errors or gaps in the proof?
+3. Does the solution arrive at the correct answer?
+4. What specific improvements could be made?
+
+Be fair but rigorous. Mathematical olympiad problems require precise proofs.
+
+Respond in JSON format:
+{
+  "isCorrect": boolean,
+  "score": number (0-100),
+  "feedback": "detailed feedback explaining what was correct and what was wrong",
+  "errors": ["list of specific errors found"],
+  "improvements": ["list of suggested improvements"],
+  "keyStepsMissing": ["any important proof steps that were skipped"]
+}`;
+
+    const userPrompt = `Problem: ${problem.title}
+
+Problem Statement:
+${problem.statement}
+
+Official Solution:
+${problem.solution}
+
+${problem.answer ? `Correct Answer: ${problem.answer}` : ''}
+
+Student's Solution:
+${userSolutionText || '[Submitted as image - analyze based on typical mathematical proof structure]'}
+
+${userSolutionImageUrl ? `Student's solution image URL: ${userSolutionImageUrl}` : ''}
+
+Please grade this student's solution by comparing it to the official solution. Be thorough in your analysis.`;
+
+    // Call Lovable AI
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -57,28 +120,7 @@ serve(async (req) => {
       );
     }
 
-    const systemPrompt = `You are a mathematics solution evaluator. Compare the student's solution with the correct solution and determine if the student's approach and answer are correct.
-
-Your response must be in JSON format with the following structure:
-{
-  "isCorrect": boolean,
-  "score": number (0-100),
-  "feedback": string (constructive feedback explaining what was done well or what is missing),
-  "missingSteps": string[] (list of missing or incorrect steps if any),
-  "suggestions": string (specific suggestions for improvement)
-}
-
-Be encouraging but honest. If the solution is partially correct, acknowledge what is correct and explain what needs improvement.`;
-
-    const userPrompt = `**Student's Solution:**
-${userSolution}
-
-**Correct Solution:**
-${correctSolution}
-
-Please analyze and compare these solutions.`;
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
@@ -93,60 +135,83 @@ Please analyze and compare these solutions.`;
       }),
     });
 
-    if (!response.ok) {
-      if (response.status === 429) {
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+      console.error("AI API error:", aiResponse.status, errorText);
+      
+      if (aiResponse.status === 429) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded, please try again later" }),
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
+      if (aiResponse.status === 402) {
         return new Response(
-          JSON.stringify({ error: "AI credits exhausted" }),
+          JSON.stringify({ error: "AI service credits exhausted." }),
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      
       return new Response(
-        JSON.stringify({ error: "AI service error" }),
+        JSON.stringify({ error: "AI grading service unavailable" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const data = await response.json();
-    const aiResponse = data.choices?.[0]?.message?.content;
-
-    if (!aiResponse) {
-      return new Response(
-        JSON.stringify({ error: "No response from AI" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Try to parse the JSON from the AI response
-    let result;
+    const aiData = await aiResponse.json();
+    const aiContent = aiData.choices?.[0]?.message?.content || "";
+    
+    // Parse AI response
+    let gradeResult;
     try {
-      // Extract JSON from the response (it might be wrapped in markdown)
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      // Try to extract JSON from the response
+      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
-        result = JSON.parse(jsonMatch[0]);
+        gradeResult = JSON.parse(jsonMatch[0]);
       } else {
-        throw new Error("No JSON found in response");
+        // Fallback if no JSON found
+        gradeResult = {
+          isCorrect: false,
+          score: 50,
+          feedback: aiContent,
+          errors: [],
+          improvements: ["Please try again with a clearer solution"],
+          keyStepsMissing: []
+        };
       }
-    } catch (e) {
-      // If parsing fails, return the raw response
-      result = {
+    } catch (parseError) {
+      console.error("Failed to parse AI response:", parseError);
+      gradeResult = {
         isCorrect: false,
-        score: 0,
-        feedback: aiResponse,
-        missingSteps: [],
-        suggestions: "Unable to parse AI response properly.",
+        score: 50,
+        feedback: aiContent,
+        errors: [],
+        improvements: [],
+        keyStepsMissing: []
       };
     }
 
+    // Store the submission
+    await supabaseClient
+      .from("solution_submissions")
+      .insert({
+        user_id: user.id,
+        problem_id: problemId,
+        solution_text: userSolutionText || `[Image submission: ${userSolutionImageUrl}]`,
+        status: gradeResult.isCorrect ? 'approved' : 'rejected',
+        feedback: gradeResult.feedback,
+        points_earned: gradeResult.isCorrect ? Math.round(gradeResult.score / 10) : 0,
+        reviewed_at: new Date().toISOString(),
+      });
+
+    console.log(`Solution graded for user ${user.id} on problem ${problemId}: score=${gradeResult.score}`);
+
     return new Response(
-      JSON.stringify(result),
+      JSON.stringify({
+        success: true,
+        grade: gradeResult,
+        officialSolution: problem.solution,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

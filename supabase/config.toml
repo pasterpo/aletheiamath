@@ -2,3 +2,9 @@ project_id = "jgvxwoaalmpirdampvew"
 
 [functions.verify-answer]
 verify_jwt = false
+
+[functions.tournament-engine]
+verify_jwt = false
+
+[functions.compare-solutions]
+verify_jwt = false

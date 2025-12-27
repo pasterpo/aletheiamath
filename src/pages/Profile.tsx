@@ -21,6 +21,7 @@ import { StatsDashboard } from '@/components/profile/StatsDashboard';
 import { RatingChart } from '@/components/profile/RatingChart';
 import { ActivityCalendar } from '@/components/profile/ActivityCalendar';
 import { AchievementsDisplay } from '@/components/profile/AchievementsDisplay';
+import { TournamentStats } from '@/components/profile/TournamentStats';
 
 interface Profile {
   id: string;
@@ -333,14 +334,19 @@ export default function Profile() {
 
           {/* Stats Dashboard Tabs */}
           <Tabs defaultValue="dashboard" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsList className="grid w-full grid-cols-4 mb-6">
               <TabsTrigger value="dashboard">Performance</TabsTrigger>
+              <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
               <TabsTrigger value="details">Account</TabsTrigger>
             </TabsList>
 
             <TabsContent value="dashboard">
               <StatsDashboard userId={targetUserId} />
+            </TabsContent>
+
+            <TabsContent value="tournaments">
+              <TournamentStats userId={targetUserId} />
             </TabsContent>
 
             <TabsContent value="achievements">

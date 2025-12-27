@@ -24,6 +24,7 @@ import {
   TournamentParticipant,
 } from '@/hooks/useTournaments';
 import { TournamentGame } from '@/components/tournaments/TournamentGame';
+import { useTournamentPairing } from '@/hooks/useTournamentPairing';
 import { format, formatDistanceToNow, differenceInSeconds, isPast } from 'date-fns';
 
 export default function TournamentLobby() {
@@ -43,6 +44,10 @@ export default function TournamentLobby() {
 
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [tournamentProgress, setTournamentProgress] = useState(0);
+
+  // Check if user is in lobby and trigger pairing
+  const isInLobby = myParticipation?.status === 'in_lobby';
+  useTournamentPairing(id || '', isInLobby && tournament?.status === 'active');
 
   // Timer effect
   useEffect(() => {
