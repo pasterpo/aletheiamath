@@ -42,6 +42,9 @@ export interface TournamentParticipant {
   last_opponent_id: string | null;
   lobby_since: string | null;
   joined_at: string;
+  pause_count: number;
+  last_paused_at: string | null;
+  can_rejoin_at: string | null;
   profile?: {
     full_name: string | null;
     avatar_url: string | null;
@@ -234,16 +237,22 @@ export function usePauseTournament() {
     mutationFn: async ({ tournamentId, paused }: { tournamentId: string; paused: boolean }) => {
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await supabase
-        .from('tournament_participants')
-        .update({ 
-          status: paused ? 'paused' : 'in_lobby',
-          lobby_since: paused ? null : new Date().toISOString()
-        })
-        .eq('tournament_id', tournamentId)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
+      if (paused) {
+        // Use Lichess-style pause with progressive delay
+        const { data, error } = await supabase.functions.invoke('tournament-engine', {
+          body: { action: 'pause_player', tournament_id: tournamentId, game_id: user.id }
+        });
+        if (error) throw error;
+        return data;
+      } else {
+        // Resume with delay check
+        const { data, error } = await supabase.functions.invoke('tournament-engine', {
+          body: { action: 'resume_player', tournament_id: tournamentId, game_id: user.id }
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      }
     },
     onSuccess: (_, { tournamentId }) => {
       queryClient.invalidateQueries({ queryKey: ['tournament-participants', tournamentId] });
@@ -380,22 +389,26 @@ export function useSubmitTournamentAnswer() {
         }
       }
 
-      // If correct, determine winner
+      // If correct, determine winner - use Lichess-style scoring via backend
       if (isCorrect) {
         updateData.winner_id = user.id;
         updateData.status = 'finished';
         updateData.finished_at = new Date().toISOString();
-        
-        // Calculate points (2 base, +1 for berserk, streak bonus)
-        let points = 2;
-        if (isPlayerA && game.player_a_berserk) points += 1;
-        if (!isPlayerA && game.player_b_berserk) points += 1;
-        
-        if (isPlayerA) {
-          updateData.points_awarded_a = points;
-        } else {
-          updateData.points_awarded_b = points;
-        }
+        updateData.result_type = 'win';
+
+        const { error } = await supabase
+          .from('tournament_games')
+          .update(updateData)
+          .eq('id', gameId);
+
+        if (error) throw error;
+
+        // Process game result with Lichess scoring
+        await supabase.functions.invoke('tournament-engine', {
+          body: { action: 'process_game_result', game_id: gameId, tournament_ended: false }
+        });
+
+        return { isCorrect: true, mistakes: 0 };
       }
 
       const { error } = await supabase
@@ -411,6 +424,7 @@ export function useSubmitTournamentAnswer() {
       queryClient.invalidateQueries({ queryKey: ['my-current-game'] });
       queryClient.invalidateQueries({ queryKey: ['tournament-games'] });
       queryClient.invalidateQueries({ queryKey: ['tournament-participants'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-duels'] });
     },
   });
 }
@@ -438,14 +452,8 @@ export function useGiveUpGame() {
         winner_id: winnerId,
         status: 'finished',
         finished_at: new Date().toISOString(),
+        result_type: 'resign',
       };
-
-      // Award 2 points to winner
-      if (isPlayerA) {
-        updateData.points_awarded_b = 2;
-      } else {
-        updateData.points_awarded_a = 2;
-      }
 
       const { error } = await supabase
         .from('tournament_games')
@@ -453,12 +461,52 @@ export function useGiveUpGame() {
         .eq('id', gameId);
 
       if (error) throw error;
+
+      // Process game result with Lichess scoring
+      await supabase.functions.invoke('tournament-engine', {
+        body: { action: 'process_game_result', game_id: gameId, tournament_ended: false }
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['my-current-game'] });
       queryClient.invalidateQueries({ queryKey: ['tournament-games'] });
       queryClient.invalidateQueries({ queryKey: ['tournament-participants'] });
+      queryClient.invalidateQueries({ queryKey: ['featured-duels'] });
     },
+  });
+}
+
+// Hook for featured duels (top ongoing games by rating)
+export interface FeaturedDuel {
+  id: string;
+  tournament_id: string;
+  game_id: string;
+  player_a_name: string;
+  player_b_name: string;
+  player_a_rating: number;
+  player_b_rating: number;
+  player_a_rank: number | null;
+  player_b_rank: number | null;
+  average_rating: number;
+  created_at: string;
+}
+
+export function useFeaturedDuels(tournamentId: string) {
+  return useQuery({
+    queryKey: ['featured-duels', tournamentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tournament_featured_duels')
+        .select('*')
+        .eq('tournament_id', tournamentId)
+        .order('average_rating', { ascending: false })
+        .limit(5);
+
+      if (error) throw error;
+      return data as FeaturedDuel[];
+    },
+    enabled: !!tournamentId,
+    refetchInterval: 3000,
   });
 }
 

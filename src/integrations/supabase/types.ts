@@ -517,6 +517,63 @@ export type Database = {
           },
         ]
       }
+      tournament_featured_duels: {
+        Row: {
+          average_rating: number
+          created_at: string
+          game_id: string
+          id: string
+          player_a_name: string
+          player_a_rank: number | null
+          player_a_rating: number
+          player_b_name: string
+          player_b_rank: number | null
+          player_b_rating: number
+          tournament_id: string
+        }
+        Insert: {
+          average_rating?: number
+          created_at?: string
+          game_id: string
+          id?: string
+          player_a_name: string
+          player_a_rank?: number | null
+          player_a_rating?: number
+          player_b_name: string
+          player_b_rank?: number | null
+          player_b_rating?: number
+          tournament_id: string
+        }
+        Update: {
+          average_rating?: number
+          created_at?: string
+          game_id?: string
+          id?: string
+          player_a_name?: string
+          player_a_rank?: number | null
+          player_a_rating?: number
+          player_b_name?: string
+          player_b_rank?: number | null
+          player_b_rating?: number
+          tournament_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tournament_featured_duels_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "tournament_games"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tournament_featured_duels_tournament_id_fkey"
+            columns: ["tournament_id"]
+            isOneToOne: false
+            referencedRelation: "tournaments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tournament_games: {
         Row: {
           created_at: string
@@ -537,6 +594,7 @@ export type Database = {
           points_awarded_a: number | null
           points_awarded_b: number | null
           problem_id: string | null
+          result_type: string | null
           round_number: number
           started_at: string | null
           status: Database["public"]["Enums"]["game_status"]
@@ -562,6 +620,7 @@ export type Database = {
           points_awarded_a?: number | null
           points_awarded_b?: number | null
           problem_id?: string | null
+          result_type?: string | null
           round_number?: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["game_status"]
@@ -587,6 +646,7 @@ export type Database = {
           points_awarded_a?: number | null
           points_awarded_b?: number | null
           problem_id?: string | null
+          result_type?: string | null
           round_number?: number
           started_at?: string | null
           status?: Database["public"]["Enums"]["game_status"]
@@ -612,14 +672,17 @@ export type Database = {
       }
       tournament_participants: {
         Row: {
+          can_rejoin_at: string | null
           draws: number
           id: string
           is_berserk_next: boolean
           is_on_fire: boolean
           joined_at: string
           last_opponent_id: string | null
+          last_paused_at: string | null
           lobby_since: string | null
           losses: number
+          pause_count: number | null
           score: number
           status: Database["public"]["Enums"]["participant_status"]
           streak: number
@@ -628,14 +691,17 @@ export type Database = {
           wins: number
         }
         Insert: {
+          can_rejoin_at?: string | null
           draws?: number
           id?: string
           is_berserk_next?: boolean
           is_on_fire?: boolean
           joined_at?: string
           last_opponent_id?: string | null
+          last_paused_at?: string | null
           lobby_since?: string | null
           losses?: number
+          pause_count?: number | null
           score?: number
           status?: Database["public"]["Enums"]["participant_status"]
           streak?: number
@@ -644,14 +710,17 @@ export type Database = {
           wins?: number
         }
         Update: {
+          can_rejoin_at?: string | null
           draws?: number
           id?: string
           is_berserk_next?: boolean
           is_on_fire?: boolean
           joined_at?: string
           last_opponent_id?: string | null
+          last_paused_at?: string | null
           lobby_since?: string | null
           losses?: number
+          pause_count?: number | null
           score?: number
           status?: Database["public"]["Enums"]["participant_status"]
           streak?: number
