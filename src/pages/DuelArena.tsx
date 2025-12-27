@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Swords, Clock, CheckCircle, XCircle, Loader2, Trophy } from 'lucide-react';
+import { Swords, Clock, CheckCircle, XCircle, Loader2, Trophy, User } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,12 @@ interface DuelData {
     image_url: string | null;
     answer: string | null;
     difficulty: number | null;
+  };
+  challenger_profile?: {
+    full_name: string | null;
+  };
+  opponent_profile?: {
+    full_name: string | null;
   };
 }
 
@@ -60,8 +66,22 @@ export default function DuelArena() {
 
       if (error) throw error;
       
-      // Cast the data properly
       const duelData = data as unknown as DuelData;
+      
+      // Fetch player profiles
+      const playerIds = [duelData.challenger_id, duelData.opponent_id].filter(Boolean) as string[];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', playerIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+      
+      duelData.challenger_profile = profileMap.get(duelData.challenger_id) || null;
+      if (duelData.opponent_id) {
+        duelData.opponent_profile = profileMap.get(duelData.opponent_id) || null;
+      }
+      
       setDuel(duelData);
       
       // Check if current user has already submitted
@@ -122,7 +142,8 @@ export default function DuelArena() {
     }
   }, [duel?.status, duel?.started_at, hasSubmitted]);
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null || seconds === undefined) return '--:--';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -149,7 +170,7 @@ export default function DuelArena() {
       const otherAnswered = isChallenger ? duel.opponent_answer : duel.challenger_answer;
       
       if (otherAnswered) {
-        // Both have answered, determine winner based on FASTEST CORRECT answer
+        // Both have answered, determine winner based on correct answers and time
         const correctAnswer = duel.problem?.answer?.toLowerCase().trim();
         const myAnswerCorrect = answer.trim().toLowerCase() === correctAnswer;
         const otherAnswer = (otherAnswered as string).toLowerCase().trim();
@@ -161,13 +182,13 @@ export default function DuelArena() {
         let winnerId: string | null = null;
         
         if (myAnswerCorrect && !otherAnswerCorrect) {
-          // Only I got it right
+          // Only I got it right - I win regardless of time
           winnerId = user.id;
         } else if (!myAnswerCorrect && otherAnswerCorrect) {
-          // Only opponent got it right
+          // Only opponent got it right - they win regardless of time
           winnerId = isChallenger ? duel.opponent_id : duel.challenger_id;
         } else if (myAnswerCorrect && otherAnswerCorrect) {
-          // Both correct - FASTER TIME wins
+          // Both correct - fastest time wins
           if (myTime < (otherTime || Infinity)) {
             winnerId = user.id;
           } else if ((otherTime || Infinity) < myTime) {
@@ -175,7 +196,7 @@ export default function DuelArena() {
           }
           // If times are equal, it's a draw (winnerId stays null)
         }
-        // If both wrong, winnerId is null = draw
+        // If both wrong, it's a draw (winnerId stays null)
 
         updateData.status = 'completed';
         updateData.completed_at = new Date().toISOString();
@@ -229,7 +250,10 @@ export default function DuelArena() {
     );
   }
 
-  // Waiting for opponent - with real-time subscription already set up
+  const challengerName = duel.challenger_profile?.full_name || 'Player 1';
+  const opponentName = duel.opponent_profile?.full_name || 'Player 2';
+
+  // Waiting for opponent
   if (duel.status === 'waiting') {
     const isChallenger = duel.challenger_id === user?.id;
     return (
@@ -259,10 +283,21 @@ export default function DuelArena() {
     );
   }
 
-  // Duel completed
+  // Duel completed - show results with player names and times
   if (duel.status === 'completed') {
     const isWinner = duel.winner_id === user?.id;
     const isDraw = !duel.winner_id;
+    
+    // Determine correctness for display
+    const correctAnswer = duel.problem?.answer?.toLowerCase().trim();
+    const challengerCorrect = duel.challenger_answer?.toLowerCase().trim() === correctAnswer;
+    const opponentCorrect = duel.opponent_answer?.toLowerCase().trim() === correctAnswer;
+    
+    const winnerName = duel.winner_id === duel.challenger_id 
+      ? challengerName 
+      : duel.winner_id === duel.opponent_id 
+        ? opponentName 
+        : null;
     
     return (
       <Layout>
@@ -274,7 +309,11 @@ export default function DuelArena() {
                   <>
                     <Swords className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
                     <h1 className="heading-section text-foreground mb-2">It's a Draw!</h1>
-                    <p className="text-muted-foreground mb-6">Neither player got the correct answer</p>
+                    <p className="text-muted-foreground mb-6">
+                      {!challengerCorrect && !opponentCorrect 
+                        ? 'Neither player got the correct answer' 
+                        : 'Both players solved it at the same time'}
+                    </p>
                   </>
                 ) : isWinner ? (
                   <>
@@ -286,9 +325,50 @@ export default function DuelArena() {
                   <>
                     <XCircle className="h-16 w-16 mx-auto text-destructive mb-4" />
                     <h1 className="heading-section text-foreground mb-2">You Lost</h1>
-                    <p className="text-muted-foreground mb-6">Better luck next time!</p>
+                    <p className="text-muted-foreground mb-6">{winnerName} won this round!</p>
                   </>
                 )}
+                
+                {/* Results Table with Names and Times */}
+                <div className="grid grid-cols-2 gap-4 mb-6 p-4 bg-secondary/50 rounded-lg">
+                  <div className="text-center p-4 bg-background rounded-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <User className="h-4 w-4 text-primary" />
+                      <p className="font-semibold">{challengerName}</p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-2xl font-mono mb-2">
+                      <Clock className="h-5 w-5 text-muted-foreground" />
+                      <span>{formatTime(duel.challenger_time_seconds)}</span>
+                    </div>
+                    <Badge className={challengerCorrect ? 'bg-green-500' : 'bg-red-500'}>
+                      {challengerCorrect ? 'Correct' : 'Wrong'}
+                    </Badge>
+                    {duel.winner_id === duel.challenger_id && (
+                      <div className="mt-2">
+                        <Trophy className="h-6 w-6 text-yellow-500 mx-auto" />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="text-center p-4 bg-background rounded-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <User className="h-4 w-4 text-primary" />
+                      <p className="font-semibold">{opponentName}</p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2 text-2xl font-mono mb-2">
+                      <Clock className="h-5 w-5 text-muted-foreground" />
+                      <span>{formatTime(duel.opponent_time_seconds)}</span>
+                    </div>
+                    <Badge className={opponentCorrect ? 'bg-green-500' : 'bg-red-500'}>
+                      {opponentCorrect ? 'Correct' : 'Wrong'}
+                    </Badge>
+                    {duel.winner_id === duel.opponent_id && (
+                      <div className="mt-2">
+                        <Trophy className="h-6 w-6 text-yellow-500 mx-auto" />
+                      </div>
+                    )}
+                  </div>
+                </div>
                 
                 {duel.problem?.answer && (
                   <div className="bg-secondary rounded-lg p-4 mb-6">
@@ -320,6 +400,21 @@ export default function DuelArena() {
               <Clock className="h-4 w-4" />
               {formatTime(elapsedTime)}
             </Badge>
+          </div>
+
+          {/* Show both player names */}
+          <div className="flex justify-between items-center mb-4 p-3 bg-secondary/50 rounded-lg">
+            <div className="flex items-center gap-2">
+              <User className="h-4 w-4" />
+              <span className="font-medium">{challengerName}</span>
+              {duel.challenger_id === user?.id && <Badge variant="outline" className="text-xs">You</Badge>}
+            </div>
+            <Swords className="h-5 w-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{opponentName}</span>
+              {duel.opponent_id === user?.id && <Badge variant="outline" className="text-xs">You</Badge>}
+              <User className="h-4 w-4" />
+            </div>
           </div>
 
           <Card className="mb-6">

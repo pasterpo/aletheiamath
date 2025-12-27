@@ -23,6 +23,7 @@ export function useFriends() {
     queryFn: async () => {
       if (!user) return [];
 
+      // Get all accepted friendships where user is either the sender or receiver
       const { data, error } = await supabase
         .from('friendships')
         .select('*')
@@ -31,14 +32,14 @@ export function useFriends() {
 
       if (error) throw error;
 
-      // Get all friend user IDs
+      // Get all friend user IDs (the OTHER person in the friendship)
       const friendIds = data?.map(f => 
         f.user_id === user.id ? f.friend_id : f.user_id
       ) || [];
 
       if (friendIds.length === 0) return [];
 
-      // Fetch profiles
+      // Fetch profiles for all friends
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, email')
@@ -46,10 +47,14 @@ export function useFriends() {
 
       const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
 
-      return data?.map(f => ({
-        ...f,
-        profile: profileMap.get(f.user_id === user.id ? f.friend_id : f.user_id)
-      })) as Friendship[];
+      // Return friendships with the friend's profile attached
+      return data?.map(f => {
+        const friendUserId = f.user_id === user.id ? f.friend_id : f.user_id;
+        return {
+          ...f,
+          profile: profileMap.get(friendUserId)
+        };
+      }) as Friendship[];
     },
     enabled: !!user,
   });
@@ -63,6 +68,7 @@ export function useFriendRequests() {
     queryFn: async () => {
       if (!user) return [];
 
+      // Get pending requests where current user is the recipient
       const { data, error } = await supabase
         .from('friendships')
         .select('*')
@@ -97,6 +103,17 @@ export function useSendFriendRequest() {
   return useMutation({
     mutationFn: async (friendId: string) => {
       if (!user) throw new Error('Not authenticated');
+
+      // Check if friendship already exists
+      const { data: existing } = await supabase
+        .from('friendships')
+        .select('*')
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`)
+        .maybeSingle();
+
+      if (existing) {
+        throw new Error('Friend request already exists');
+      }
 
       const { error } = await supabase
         .from('friendships')
@@ -133,6 +150,7 @@ export function useRespondToFriendRequest() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['friends'] });
       queryClient.invalidateQueries({ queryKey: ['friend-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 }

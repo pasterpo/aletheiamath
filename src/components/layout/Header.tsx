@@ -52,8 +52,8 @@ export function Header() {
           </div>
         </Link>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-6">
+        {/* Desktop Navigation - increased gap */}
+        <nav className="hidden lg:flex items-center gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -70,8 +70,8 @@ export function Header() {
           ))}
         </nav>
 
-        {/* Auth Buttons & Notifications - Desktop */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Auth Buttons & Notifications - Desktop - increased gap */}
+        <div className="hidden md:flex items-center gap-4">
           {user ? (
             <>
               {/* Friends Link */}

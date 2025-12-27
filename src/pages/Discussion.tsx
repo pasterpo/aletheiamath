@@ -68,7 +68,6 @@ export default function Discussion() {
     if (selectedTopic) {
       fetchMessages(selectedTopic.id);
       
-      // Subscribe to realtime updates for this topic
       const channel = supabase
         .channel(`discussion-messages-${selectedTopic.id}`)
         .on(
@@ -276,24 +275,24 @@ export default function Discussion() {
 
   return (
     <Layout>
-      <section className="py-8 md:py-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-4">
+      <section className="py-4 md:py-6 min-h-[calc(100vh-4rem)]">
+        <div className="container mx-auto px-4 h-full">
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full mb-2">
               <MessageCircle className="w-4 h-4" />
               <span className="text-sm font-medium">Community Discussion</span>
             </div>
-            <h1 className="heading-section text-foreground mb-2">Discussion Forum</h1>
-            <p className="text-muted-foreground">
+            <h1 className="heading-section text-foreground mb-1">Discussion Forum</h1>
+            <p className="text-muted-foreground text-sm">
               Join topic-based discussions with the AletheiaMath community
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 h-[calc(100vh-14rem)]">
             {/* Topics Sidebar */}
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader className="pb-3">
+            <div className="lg:col-span-1 h-full">
+              <Card className="h-full flex flex-col">
+                <CardHeader className="pb-3 flex-shrink-0">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">Topics</CardTitle>
                     {isDeveloper && (
@@ -333,8 +332,8 @@ export default function Discussion() {
                     )}
                   </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[500px]">
+                <CardContent className="p-0 flex-1 overflow-hidden">
+                  <ScrollArea className="h-full">
                     {topicsLoading ? (
                       <div className="flex justify-center py-8">
                         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -396,156 +395,150 @@ export default function Discussion() {
               </Card>
             </div>
 
-            {/* Chat Area */}
-            <div className="lg:col-span-3">
-              <Card className="h-[600px] flex flex-col">
+            {/* Chat Area - Full height */}
+            <div className="lg:col-span-3 h-full">
+              <Card className="h-full flex flex-col">
                 {selectedTopic ? (
                   <>
-                    <CardHeader className="border-b pb-3">
+                    <CardHeader className="border-b pb-3 flex-shrink-0">
                       <CardTitle className="text-lg">{selectedTopic.name}</CardTitle>
                       {selectedTopic.description && (
                         <p className="text-sm text-muted-foreground">{selectedTopic.description}</p>
                       )}
                     </CardHeader>
-                    <ScrollArea className="flex-1 p-4">
-                      {loading ? (
-                        <div className="flex items-center justify-center h-full">
-                          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                      ) : messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                          <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
-                          <p>No messages yet. Start the conversation!</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {messages.map((msg) => {
-                            const isOwnMessage = msg.user_id === user?.id;
-                            const canDelete = isOwnMessage || isDeveloper;
-                            
-                            return (
-                              <div
-                                key={msg.id}
-                                className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
-                              >
-                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                  <span className="text-xs font-semibold text-primary">
-                                    {(msg.profile?.full_name || msg.profile?.email || 'U')[0].toUpperCase()}
-                                  </span>
-                                </div>
-                                <div className={`flex-1 max-w-[70%] ${isOwnMessage ? 'text-right' : ''}`}>
-                                  <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
-                                    <Link 
-                                      to={`/profile?id=${msg.user_id}`}
-                                      className="text-sm font-medium hover:underline"
-                                    >
-                                      {msg.profile?.full_name || msg.profile?.email || 'Anonymous'}
-                                    </Link>
-                                    <span className="text-xs text-muted-foreground">
-                                      {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                    <div className="flex-1 overflow-hidden">
+                      <ScrollArea className="h-full p-4">
+                        {loading ? (
+                          <div className="flex items-center justify-center h-full">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                          </div>
+                        ) : messages.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                            <MessageCircle className="h-12 w-12 mb-4 opacity-50" />
+                            <p>No messages yet. Start the conversation!</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {messages.map((msg) => {
+                              const isOwnMessage = msg.user_id === user?.id;
+                              const canDelete = isOwnMessage || isDeveloper;
+                              
+                              return (
+                                <div
+                                  key={msg.id}
+                                  className={`flex gap-3 ${isOwnMessage ? 'flex-row-reverse' : ''}`}
+                                >
+                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                    <span className="text-xs font-semibold text-primary">
+                                      {(msg.profile?.full_name || msg.profile?.email || 'U')[0].toUpperCase()}
                                     </span>
-                                    {canDelete && (
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => handleDelete(msg.id)}
-                                      >
-                                        <Trash2 className="h-3 w-3" />
-                                      </Button>
-                                    )}
                                   </div>
-                                  <div
-                                    className={`inline-block p-3 rounded-lg ${
-                                      isOwnMessage
-                                        ? 'bg-primary text-primary-foreground'
+                                  <div className={`flex-1 max-w-[70%] ${isOwnMessage ? 'text-right' : ''}`}>
+                                    <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'justify-end' : ''}`}>
+                                      <Link 
+                                        to={`/profile?id=${msg.user_id}`}
+                                        className="text-sm font-medium hover:underline"
+                                      >
+                                        {msg.profile?.full_name || msg.profile?.email || 'Anonymous'}
+                                      </Link>
+                                      <span className="text-xs text-muted-foreground">
+                                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
+                                      </span>
+                                      {canDelete && (
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-5 w-5 p-0 text-muted-foreground hover:text-destructive"
+                                          onClick={() => handleDelete(msg.id)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                    </div>
+                                    <div className={`rounded-lg p-3 ${
+                                      isOwnMessage 
+                                        ? 'bg-primary text-primary-foreground' 
                                         : 'bg-secondary'
-                                    }`}
-                                  >
-                                    {msg.image_url && (
-                                      <img 
-                                        src={msg.image_url} 
-                                        alt="Shared image" 
-                                        className="max-w-full rounded-lg mb-2 max-h-64 object-contain"
-                                      />
-                                    )}
-                                    {msg.message && (
-                                      <p className="text-sm whitespace-pre-wrap break-words">{msg.message}</p>
-                                    )}
+                                    }`}>
+                                      {msg.image_url && (
+                                        <img 
+                                          src={msg.image_url} 
+                                          alt="Shared" 
+                                          className="max-w-full rounded mb-2 max-h-64 object-contain"
+                                        />
+                                      )}
+                                      {msg.message && <p className="text-sm whitespace-pre-wrap">{msg.message}</p>}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                          <div ref={scrollRef} />
-                        </div>
-                      )}
-                    </ScrollArea>
+                              );
+                            })}
+                            <div ref={scrollRef} />
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </div>
                     
-                    <CardContent className="border-t p-4">
-                      {user ? (
-                        <div className="space-y-2">
-                          {imagePreview && (
-                            <div className="relative inline-block">
-                              <img src={imagePreview} alt="Preview" className="h-20 rounded-lg" />
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                className="absolute -top-2 -right-2 h-6 w-6 p-0 rounded-full"
-                                onClick={clearImage}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          )}
-                          <form onSubmit={handleSend} className="flex gap-2">
-                            <input
-                              type="file"
-                              ref={fileInputRef}
-                              onChange={handleImageSelect}
-                              accept="image/*"
-                              className="hidden"
-                            />
+                    {/* Message Input */}
+                    {user ? (
+                      <div className="border-t p-4 flex-shrink-0">
+                        {imagePreview && (
+                          <div className="relative inline-block mb-2">
+                            <img src={imagePreview} alt="Preview" className="h-20 rounded" />
                             <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={uploading}
+                              size="sm"
+                              variant="destructive"
+                              className="absolute -top-2 -right-2 h-5 w-5 p-0 rounded-full"
+                              onClick={clearImage}
                             >
-                              <Image className="h-4 w-4" />
+                              <X className="h-3 w-3" />
                             </Button>
-                            <Input
-                              value={newMessage}
-                              onChange={(e) => setNewMessage(e.target.value)}
-                              placeholder="Type your message..."
-                              disabled={sending || uploading}
-                            />
-                            <Button type="submit" disabled={sending || uploading || (!newMessage.trim() && !imageFile)}>
-                              {sending || uploading ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Send className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </form>
-                        </div>
-                      ) : (
-                        <div className="text-center py-2">
-                          <Link to="/auth">
-                            <Button>Sign in to chat</Button>
-                          </Link>
-                        </div>
-                      )}
-                    </CardContent>
+                          </div>
+                        )}
+                        <form onSubmit={handleSend} className="flex gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            ref={fileInputRef}
+                            onChange={handleImageSelect}
+                            className="hidden"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={sending || uploading}
+                          >
+                            <Image className="h-4 w-4" />
+                          </Button>
+                          <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder="Type your message..."
+                            disabled={sending || uploading}
+                            className="flex-1"
+                          />
+                          <Button type="submit" disabled={sending || uploading || (!newMessage.trim() && !imageFile)}>
+                            {sending || uploading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </form>
+                      </div>
+                    ) : (
+                      <div className="border-t p-4 text-center text-muted-foreground flex-shrink-0">
+                        <Link to="/auth" className="text-primary hover:underline">Sign in</Link> to join the discussion
+                      </div>
+                    )}
                   </>
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <Users className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg font-medium">Select a topic to start chatting</p>
-                      <p className="text-sm">Choose from the topics on the left</p>
-                    </div>
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                    <MessageCircle className="h-16 w-16 mb-4 opacity-50" />
+                    <h2 className="text-xl font-semibold mb-2">Select a Topic</h2>
+                    <p className="text-sm">Choose a topic from the sidebar to view the discussion</p>
                   </div>
                 )}
               </Card>
